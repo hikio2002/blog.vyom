@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Mail, MailOpen, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatRelative } from '@/lib/utils';
@@ -13,21 +13,21 @@ export default function AdminMessagesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
   const token = Cookies.get('vyom_token');
-  const h = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const headers = useMemo(() => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }), [token]);
 
   const load = () => {
     setLoading(true);
     const params = statusFilter ? `?status=${statusFilter}` : '';
-    fetch(`/api/contact${params}`, { headers: h })
+    fetch(`/api/contact${params}`, { headers })
       .then(r => r.json())
       .then(d => { setMessages(d.messages || []); setTotal(d.total || 0); setLoading(false); })
       .catch(() => setLoading(false));
   };
-  useEffect(load, [statusFilter]);
+  useEffect(() => { load(); }, [statusFilter, headers]);
 
   const markRead = async (id: string) => {
     try {
-      await fetch(`/api/contact/${id}`, { method: 'PATCH', headers: h, body: JSON.stringify({ status: 'read' }) });
+      await fetch(`/api/contact/${id}`, { method: 'PATCH', headers: headers, body: JSON.stringify({ status: 'read' }) });
       load();
     } catch { toast.error('Failed'); }
   };
@@ -35,7 +35,7 @@ export default function AdminMessagesPage() {
   const del = async (id: string) => {
     if (!confirm('Delete this message?')) return;
     try {
-      await fetch(`/api/contact/${id}`, { method: 'DELETE', headers: h });
+      await fetch(`/api/contact/${id}`, { method: 'DELETE', headers: headers });
       toast.success('Deleted'); load();
     } catch { toast.error('Failed'); }
   };
@@ -110,7 +110,7 @@ export default function AdminMessagesPage() {
                       <Mail size={12} />Reply via Email
                     </a>
                     {msg.status !== 'replied' && (
-                      <button onClick={() => { fetch(`/api/contact/${msg._id}`, { method: 'PATCH', headers: h, body: JSON.stringify({ status: 'replied' }) }).then(load); }}
+                      <button onClick={() => { fetch(`/api/contact/${msg._id}`, { method: 'PATCH', headers: headers, body: JSON.stringify({ status: 'replied' }) }).then(load); }}
                         className="btn-secondary text-xs py-1.5">Mark as Replied</button>
                     )}
                   </div>

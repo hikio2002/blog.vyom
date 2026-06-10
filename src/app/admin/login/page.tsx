@@ -14,7 +14,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (Cookies.get('vyom_token')) router.replace('/admin');
-  }, []);
+  }, [router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

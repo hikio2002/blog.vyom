@@ -39,7 +39,7 @@ export default function AdminDashboard() {
       setStats({ total: totalData.total || 0, published: publishedData.total || 0, drafts: draftData.total || 0, totalViews });
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   const statCards = [
     { icon: FileText, label: 'Total Articles', value: stats.total, color: 'bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400' },

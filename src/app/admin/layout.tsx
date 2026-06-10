@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(u => { setUser(u); setLoading(false); })
       .catch(() => { Cookies.remove('vyom_token'); router.replace('/admin/login'); });
-  }, []);
+  }, [router]);
 
   const logout = () => {
     fetch('/api/auth', { method: 'DELETE' });

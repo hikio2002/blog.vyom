@@ -49,7 +49,7 @@ export default function AdminSettingsPage() {
         });
         setLoading(false);
       }).catch(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   const set = (k: keyof Settings, v: any) => setSettings(s => ({ ...s, [k]: v }));
   const setSocial = (k: string, v: string) => setSettings(s => ({ ...s, socialLinks: { ...s.socialLinks, [k]: v } }));
