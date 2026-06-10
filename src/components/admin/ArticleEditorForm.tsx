@@ -8,14 +8,16 @@ import { makeSlug, calcReadingTime, generateExcerpt } from '@/lib/utils';
 import type { Category, Author, Article } from '@/types';
 import Cookies from 'js-cookie';
 
-const RichEditor = dynamic(() => import('./RichEditor'), { ssr: false, loading: () => <div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" /> });
+const RichEditor = dynamic(() => import('./RichEditor'), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />,
+});
 
 interface Props { article?: Article; }
 
 export default function ArticleEditorForm({ article }: Props) {
   const router = useRouter();
   const isEdit = !!article;
-  const token = Cookies.get('vyom_token');
 
   // Core fields
   const [title, setTitle] = useState(article?.title || '');
@@ -27,7 +29,9 @@ export default function ArticleEditorForm({ article }: Props) {
   const [author, setAuthor] = useState((article?.author as any)?._id || (article?.author as any) || '');
   const [tags, setTags] = useState(article?.tags?.join(', ') || '');
   const [status, setStatus] = useState(article?.status || 'draft');
-  const [scheduledAt, setScheduledAt] = useState(article?.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : '');
+  const [scheduledAt, setScheduledAt] = useState(
+    article?.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : ''
+  );
 
   // SEO overrides
   const [seoOpen, setSeoOpen] = useState(false);
@@ -42,7 +46,8 @@ export default function ArticleEditorForm({ article }: Props) {
   const [saving, setSaving] = useState(false);
   const [slugEdited, setSlugEdited] = useState(isEdit);
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
+    const token = Cookies.get('vyom_token');
     const h = { Authorization: `Bearer ${token}` };
     Promise.all([
       fetch('/api/categories', { headers: h }).then(r => r.json()),
@@ -50,8 +55,10 @@ export default function ArticleEditorForm({ article }: Props) {
     ]).then(([cats, auths]) => {
       if (Array.isArray(cats)) setCategories(cats);
       if (Array.isArray(auths)) setAuthors(auths);
-    });
+    }).catch(() => {});
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   // Auto-slug from title
   useEffect(() => {
@@ -59,23 +66,33 @@ export default function ArticleEditorForm({ article }: Props) {
   }, [title, slugEdited]);
 
   const getPayload = () => ({
-    title, slug, content, featuredImage, excerpt, tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-    category: category || undefined, author: author || undefined,
-    metaTitle: metaTitle || undefined, metaDescription: metaDesc || undefined,
-    seoKeywords: seoKeywords.split(',').map(k => k.trim()).filter(Boolean),
-    canonicalUrl: canonical || undefined, status,
+    title, slug, content, featuredImage,
+    excerpt: excerpt || undefined,
+    tags: tags.split(',').map((t: string) => t.trim()).filter(Boolean),
+    category: category || undefined,
+    author: author || undefined,
+    metaTitle: metaTitle || undefined,
+    metaDescription: metaDesc || undefined,
+    seoKeywords: seoKeywords.split(',').map((k: string) => k.trim()).filter(Boolean),
+    canonicalUrl: canonical || undefined,
+    status,
     scheduledAt: status === 'scheduled' && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
   });
 
   const save = async (overrideStatus?: string) => {
     if (!title.trim()) { toast.error('Title is required'); return; }
     if (!content.trim()) { toast.error('Content is required'); return; }
+    const token = Cookies.get('vyom_token');
     setSaving(true);
     try {
       const payload = { ...getPayload(), ...(overrideStatus ? { status: overrideStatus } : {}) };
       const url = isEdit ? `/api/articles/${article!._id}` : '/api/articles';
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) });
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       toast.success(isEdit ? 'Article updated!' : 'Article created!');
@@ -120,7 +137,8 @@ export default function ArticleEditorForm({ article }: Props) {
           <div>
             <label className="label flex items-center justify-between">
               <span>Slug</span>
-              <button type="button" onClick={() => { setSlug(makeSlug(title)); setSlugEdited(false); }} className="text-xs text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
+              <button type="button" onClick={() => { setSlug(makeSlug(title)); setSlugEdited(false); }}
+                className="text-xs text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
                 <RefreshCw size={10} />Auto-generate
               </button>
             </label>
@@ -132,8 +150,8 @@ export default function ArticleEditorForm({ article }: Props) {
           </div>
           <div>
             <label className="label">Excerpt / Short Description</label>
-            <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)} rows={3} placeholder="Brief description (auto-generated from content if left empty)"
-              className="input resize-none" />
+            <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)} rows={3}
+              placeholder="Brief description (auto-generated from content if left empty)" className="input resize-none" />
             <p className="text-xs text-gray-400 mt-1">{excerpt.length}/160 characters</p>
           </div>
 
@@ -146,10 +164,22 @@ export default function ArticleEditorForm({ article }: Props) {
             </button>
             {seoOpen && (
               <div className="p-4 pt-0 space-y-4 border-t border-gray-100 dark:border-gray-800">
-                <div><label className="label">Meta Title</label><input value={metaTitle} onChange={e => setMetaTitle(e.target.value)} placeholder={title || 'Defaults to article title'} className="input" /></div>
-                <div><label className="label">Meta Description</label><textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} rows={2} placeholder="Defaults to excerpt…" className="input resize-none" /></div>
-                <div><label className="label">SEO Keywords (comma-separated)</label><input value={seoKeywords} onChange={e => setSeoKeywords(e.target.value)} placeholder="smartphone, review, best…" className="input" /></div>
-                <div><label className="label">Canonical URL</label><input value={canonical} onChange={e => setCanonical(e.target.value)} placeholder="https://vyom.quest/blog/…" className="input" /></div>
+                <div>
+                  <label className="label">Meta Title</label>
+                  <input value={metaTitle} onChange={e => setMetaTitle(e.target.value)} placeholder={title || 'Defaults to article title'} className="input" />
+                </div>
+                <div>
+                  <label className="label">Meta Description</label>
+                  <textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} rows={2} placeholder="Defaults to excerpt…" className="input resize-none" />
+                </div>
+                <div>
+                  <label className="label">SEO Keywords (comma-separated)</label>
+                  <input value={seoKeywords} onChange={e => setSeoKeywords(e.target.value)} placeholder="smartphone, review, best…" className="input" />
+                </div>
+                <div>
+                  <label className="label">Canonical URL</label>
+                  <input value={canonical} onChange={e => setCanonical(e.target.value)} placeholder="https://vyom.quest/blog/…" className="input" />
+                </div>
               </div>
             )}
           </div>
@@ -195,7 +225,8 @@ export default function ArticleEditorForm({ article }: Props) {
             {featuredImage && (
               <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={featuredImage} alt="Preview" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                <img src={featuredImage} alt="Preview" className="w-full h-full object-cover"
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
               </div>
             )}
           </div>

@@ -126,6 +126,11 @@ cp .env.example .env
 Edit `.env`:
 
 ```env
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/vyom?retryWrites=true&w=majority
+JWT_SECRET=your-very-long-random-secret-here
+ADMIN_EMAIL=admin@vyom.quest
+ADMIN_PASSWORD=Admin@123456
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 ### 3. Seed the database
@@ -138,7 +143,7 @@ npm run seed
 
 Output:
 ```
-✅  Admin created: 
+✅  Admin created: admin@vyom.quest
 ✅  Category: Smartphones
 ✅  Category: Laptops
 ...
@@ -175,6 +180,13 @@ Admin panel: [http://localhost:3000/admin](http://localhost:3000/admin)
 
 **Required Vercel env vars:**
 
+| Variable | Example |
+|----------|---------|
+| `MONGODB_URI` | `mongodb+srv://...` |
+| `JWT_SECRET` | `a-long-random-string` |
+| `NEXT_PUBLIC_SITE_URL` | `https://vyom.quest` |
+| `ADMIN_EMAIL` | `admin@vyom.quest` |
+| `ADMIN_PASSWORD` | `StrongPass@123` |
 
 After first deploy, run seed once:
 

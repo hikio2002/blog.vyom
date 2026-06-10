@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Tag as ITag } from '@/types';
@@ -9,21 +9,23 @@ export default function AdminTagsPage() {
   const [tags, setTags] = useState<ITag[]>([]);
   const [loading, setLoading] = useState(true);
   const token = Cookies.get('vyom_token');
-  const h = { Authorization: `Bearer ${token}` };
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
-    fetch('/api/tags', { headers: h }).then(r => r.json())
+    fetch('/api/tags', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setTags(d); setLoading(false); })
       .catch(() => setLoading(false));
-  };
-  useEffect(load, []);
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
 
   const del = async (tag: ITag) => {
     if (!confirm(`Delete tag "${tag.name}"?`)) return;
     try {
-      await fetch(`/api/tags/${tag._id}`, { method: 'DELETE', headers: h });
-      toast.success('Tag deleted'); load();
+      await fetch(`/api/tags/${tag._id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Tag deleted');
+      load();
     } catch { toast.error('Failed'); }
   };
 

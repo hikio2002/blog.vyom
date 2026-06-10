@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
@@ -17,6 +17,7 @@ export default function SearchClient() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     fetch('/api/categories?active=true').then(r => r.json())
@@ -38,12 +39,18 @@ export default function SearchClient() {
     finally { setLoading(false); }
   }, []);
 
+  // Run once on mount if URL has params
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     const iq = searchParams.get('q') || '';
     const it = searchParams.get('tag') || '';
     const ic = searchParams.get('category') || '';
-    if (iq || it || ic) { setQ(iq); setTag(it); setCategory(ic); doSearch(iq, ic, it); }
-  }, []);
+    if (iq || it || ic) {
+      setQ(iq); setTag(it); setCategory(ic);
+      doSearch(iq, ic, it);
+    }
+  }, [doSearch, searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +60,15 @@ export default function SearchClient() {
     if (tag) p.set('tag', tag);
     router.push(`/search?${p}`);
     doSearch(q, category, tag);
+  };
+
+  const clearTag = () => {
+    setTag('');
+    doSearch(q, category, '');
+    const p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (category) p.set('category', category);
+    router.push(`/search?${p}`);
   };
 
   return (
@@ -77,7 +93,7 @@ export default function SearchClient() {
             <span className="text-sm text-gray-500">Filtering by tag:</span>
             <span className="badge-blue flex items-center gap-1">
               #{tag}
-              <button onClick={() => { setTag(''); doSearch(q, category, ''); }} className="ml-1 hover:text-red-500 transition-colors"><X size={12} /></button>
+              <button onClick={clearTag} className="ml-1 hover:text-red-500 transition-colors"><X size={12} /></button>
             </span>
           </div>
         )}

@@ -4,9 +4,9 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const ADMIN_NAME = process.env.ADMIN_NAME;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@vyom.quest';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@123456';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin';
 
 if (!MONGODB_URI) {
   console.error('\n❌  MONGODB_URI is not set. Create a .env file first.\n');
