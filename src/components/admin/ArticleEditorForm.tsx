@@ -22,7 +22,7 @@ export default function ArticleEditorForm({ article }: Props) {
   const [category, setCategory] = useState((article?.category as any)?._id || '');
   const [author, setAuthor] = useState((article?.author as any)?._id || '');
   const [tags, setTags] = useState(article?.tags?.join(', ') || '');
-  const [status, setStatus] = useState(article?.status || 'draft');
+  const [status, setStatus] = useState<Article['status']>(article?.status || 'draft');
   const [scheduledAt, setScheduledAt] = useState(
     article?.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : ''
   );
@@ -190,7 +190,11 @@ export default function ArticleEditorForm({ article }: Props) {
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Publish</h3>
             <div>
               <label className="label">Status</label>
-              <select value={status} onChange={e => setStatus(e.target.value)} className="input">
+              <select
+                value={status}
+                onChange={e => setStatus(e.target.value as Article['status'])}
+                className="input"
+              >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
                 <option value="scheduled">Scheduled</option>

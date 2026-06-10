@@ -10,7 +10,7 @@ export default function ContactPage() {
     <PublicLayout>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2" style={{ fontFamily: 'var(--font-syne)' }}>Contact Us</h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-10">Have a question, tip, or partnership inquiry? We'd love to hear from you.</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-10">Have a question, tip, or partnership inquiry? We&apos;d love to hear from you.</p>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 card p-8"><ContactForm /></div>
           <aside className="space-y-6">
