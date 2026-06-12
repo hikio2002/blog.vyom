@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Save, Globe, Share2, BarChart2, DollarSign, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
+import { safeJson } from '@/lib/fetch-json';
 
 interface SocialLinks {
   twitter: string;
@@ -54,7 +55,7 @@ export default function AdminSettingsPage() {
   const load = useCallback(async () => {
     try {
       const res  = await fetch('/api/settings');
-      const data = await res.json();
+      const data = await safeJson<any>(res);
       if (res.ok && data) {
         setSettings({
           siteName:          data.siteName          || defaults.siteName,
@@ -101,8 +102,13 @@ export default function AdminSettingsPage() {
         },
         body: JSON.stringify(settings),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+      const data = await safeJson<any>(res);
+      if (!res.ok) {
+        throw new Error(data?.error || `Server error (${res.status} ${res.statusText})`);
+      }
+      if (data === null) {
+        throw new Error('Server returned an empty response. Please check server logs.');
+      }
       toast.success('Settings saved!');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

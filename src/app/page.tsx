@@ -5,6 +5,7 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import ArticleCard from '@/components/blog/ArticleCard';
 import { getFeaturedArticles, getTrendingArticles, getPublishedArticles, getActiveCategories } from '@/lib/server-api';
 import type { Article, Category } from '@/types';
+import AdBanner from '@/components/common/AdBanner';
 
 export const revalidate = 60;
 
@@ -29,6 +30,8 @@ export default async function HomePage() {
   return (
     <PublicLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <AdBanner placement="homepage-banner" className="mb-8" />
+
         {featured.length > 0 && (
           <section className="mb-12">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -92,6 +95,8 @@ export default async function HomePage() {
                 <Link href="/categories" className="block mt-3 text-center text-sm text-indigo-600 dark:text-indigo-400 hover:underline">All categories →</Link>
               </div>
             )}
+
+            <AdBanner placement="sidebar" />
           </aside>
         </div>
       </div>

@@ -9,6 +9,7 @@ import ShareButtons from '@/components/blog/ShareButtons';
 import Breadcrumb from '@/components/blog/Breadcrumb';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/server-api';
 import type { Article } from '@/types';
+import AdBanner from '@/components/common/AdBanner';
 
 export const revalidate = 60;
 type Props = { params: { slug: string } };
@@ -106,6 +107,8 @@ export default async function BlogPostPage({ params }: Props) {
 
             <div className="article-body" dangerouslySetInnerHTML={{ __html: article.content }} />
 
+            <AdBanner placement="in-article" className="my-8" />
+
             {article.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
                 <span className="text-sm font-medium text-gray-500 mr-1">Tags:</span>
@@ -147,7 +150,7 @@ export default async function BlogPostPage({ params }: Props) {
           </article>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-4">
               <div className="card p-5">
                 <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3" style={{ fontFamily: 'var(--font-syne)' }}>Share</h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -159,6 +162,8 @@ export default async function BlogPostPage({ params }: Props) {
                   ))}
                 </div>
               </div>
+
+              <AdBanner placement="sidebar" />
             </div>
           </aside>
         </div>

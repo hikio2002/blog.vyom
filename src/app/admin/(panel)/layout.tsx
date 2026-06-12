@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import {
   LayoutDashboard, FileText, Tag, Users, FolderOpen,
-  Settings, MessageSquare, LogOut, Menu, Sun, Moon, ExternalLink,
+  Settings, MessageSquare, LogOut, Menu, Sun, Moon, ExternalLink, Megaphone,
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/admin/authors',    label: 'Authors',    icon: Users },
   { href: '/admin/tags',       label: 'Tags',       icon: Tag },
   { href: '/admin/messages',   label: 'Messages',   icon: MessageSquare },
+  { href: '/admin/ads',        label: 'Ads',        icon: Megaphone },
   { href: '/admin/settings',   label: 'Settings',   icon: Settings },
 ];
 

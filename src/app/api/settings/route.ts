@@ -12,23 +12,30 @@ export async function GET() {
     return NextResponse.json(obj);
   } catch (e: any) {
     console.error('GET /api/settings error:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e.message || 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PUT(req: NextRequest) {
+  // Auth check first
   const auth = requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
+  // Parse body separately — req.json() can throw on empty/invalid bodies
+  let body: any;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 });
+  }
+
   try {
     await dbConnect();
-    const body = await req.json();
 
-    if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-    }
-
-    // Save each top-level key as a separate Setting document
     const ops = Object.entries(body).map(([key, value]) => ({
       updateOne: {
         filter: { key },
@@ -41,13 +48,15 @@ export async function PUT(req: NextRequest) {
       await Setting.bulkWrite(ops as any);
     }
 
-    // Return the updated settings
     const updated = await Setting.find().lean();
     const obj: Record<string, any> = {};
     updated.forEach((s: any) => { obj[s.key] = s.value; });
     return NextResponse.json(obj);
   } catch (e: any) {
     console.error('PUT /api/settings error:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json(
+      { error: e?.message || 'Internal server error while saving settings' },
+      { status: 500 }
+    );
   }
 }

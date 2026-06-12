@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { safeJson } from '@/lib/fetch-json';
 
 export default function ContactForm() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -13,8 +14,8 @@ export default function ContactForm() {
     setLoading(true);
     try {
       const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await safeJson<any>(res);
+      if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`);
       toast.success('Message sent! We\'ll get back to you soon.');
       setForm({ name: '', email: '', subject: '', message: '' });
     } catch (e: any) { toast.error(e.message || 'Failed to send message'); }

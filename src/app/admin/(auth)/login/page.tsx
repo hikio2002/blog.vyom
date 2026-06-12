@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
+import { safeJson } from '@/lib/fetch-json';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -22,9 +23,10 @@ export default function AdminLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await res.json();
+      const data = await safeJson<any>(res);
 
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!res.ok) throw new Error(data?.error || `Login failed (${res.status})`);
+      if (!data?.token) throw new Error('Server did not return a token');
 
       // Store token in js-cookie (non-httpOnly — readable by client JS)
       // The server also sets this cookie in the response, but we set it

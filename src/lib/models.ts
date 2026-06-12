@@ -190,6 +190,31 @@ const SettingSchema = new Schema<ISetting>(
   { timestamps: true }
 );
 
+
+// ─── Advertisement ────────────────────────────────────────────────────────────
+export interface IAd extends Document {
+  name: string;
+  imageUrl: string;
+  linkUrl: string;
+  placement: 'header' | 'sidebar' | 'in-article' | 'footer' | 'homepage-banner';
+  isActive: boolean;
+  opensInNewTab: boolean;
+  order: number;
+}
+
+const AdSchema = new Schema<IAd>(
+  {
+    name:          { type: String, required: true, trim: true },
+    imageUrl:      { type: String, required: true },
+    linkUrl:       { type: String, required: true },
+    placement:     { type: String, enum: ['header', 'sidebar', 'in-article', 'footer', 'homepage-banner'], default: 'sidebar' },
+    isActive:      { type: Boolean, default: true },
+    opensInNewTab: { type: Boolean, default: true },
+    order:         { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
 // ─── Export models (safe for Next.js hot-reload) ──────────────────────────────
 export const User = (mongoose.models.User as mongoose.Model<IUser>) ||
   mongoose.model<IUser>('User', UserSchema);
@@ -207,3 +232,5 @@ export const Contact = (mongoose.models.Contact as mongoose.Model<IContact>) ||
   mongoose.model<IContact>('Contact', ContactSchema);
 export const Setting = (mongoose.models.Setting as mongoose.Model<ISetting>) ||
   mongoose.model<ISetting>('Setting', SettingSchema);
+export const Ad = (mongoose.models.Ad as mongoose.Model<IAd>) ||
+  mongoose.model<IAd>('Ad', AdSchema);
