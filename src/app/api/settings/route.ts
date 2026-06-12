@@ -17,15 +17,13 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  // Auth check first
   const auth = requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
-  // Parse body separately — req.json() can throw on empty/invalid bodies
   let body: any;
   try {
     body = await req.json();
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
   }
 
@@ -59,4 +57,18 @@ export async function PUT(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Some browsers/proxies send a CORS preflight OPTIONS request before PUT
+// when custom headers (Authorization, Content-Type) are present.
+// Without this handler, Next.js returns 405 for OPTIONS.
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

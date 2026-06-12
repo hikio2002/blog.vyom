@@ -6,6 +6,7 @@ import ArticleCard from '@/components/blog/ArticleCard';
 import { getFeaturedArticles, getTrendingArticles, getPublishedArticles, getActiveCategories } from '@/lib/server-api';
 import type { Article, Category } from '@/types';
 import AdBanner from '@/components/common/AdBanner';
+import LatestArticlesGrid from '@/components/blog/LatestArticlesGrid';
 
 export const revalidate = 60;
 
@@ -15,14 +16,18 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  let featured: any[] = [], latest: any[] = [], trending: any[] = [], categories: any[] = [];
+  const PAGE_SIZE = 9;
+  let featured: any[] = [], latest: any[] = [], totalPages = 1, trending: any[] = [], categories: any[] = [];
   try {
-    [featured, { articles: latest }, trending, categories] = await Promise.all([
+    let latestResult;
+    [featured, latestResult, trending, categories] = await Promise.all([
       getFeaturedArticles(3),
-      getPublishedArticles({ limit: 9, sort: '-publishedAt' }),
+      getPublishedArticles({ limit: PAGE_SIZE, sort: '-publishedAt' }),
       getTrendingArticles(5),
       getActiveCategories(),
     ]);
+    latest = latestResult.articles;
+    totalPages = latestResult.totalPages;
   } catch (e) {
     console.error('Homepage data error:', e);
   }
@@ -49,10 +54,12 @@ export default async function HomePage() {
               <h2 className="section-title flex items-center gap-2"><Zap size={20} className="text-indigo-500" />Latest Articles</h2>
               <Link href="/search" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">View all →</Link>
             </div>
-            {latest.length === 0
-              ? <div className="text-center py-16 text-gray-400"><p className="text-lg">No articles yet — check back soon!</p></div>
-              : <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{latest.map((a: any) => <ArticleCard key={a._id} article={a as Article} />)}</div>
-            }
+            <LatestArticlesGrid
+              initialArticles={latest as Article[]}
+              initialPage={1}
+              totalPages={totalPages}
+              pageSize={PAGE_SIZE}
+            />
           </div>
 
           <aside className="space-y-6">
