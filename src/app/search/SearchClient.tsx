@@ -2,9 +2,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
-import PublicLayout from '@/components/layout/PublicLayout';
 import ArticleCard from '@/components/blog/ArticleCard';
 import type { Article, Category } from '@/types';
+import { safeJson } from '@/lib/fetch-json';
 
 export default function SearchClient() {
   const searchParams = useSearchParams();
@@ -20,7 +20,8 @@ export default function SearchClient() {
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    fetch('/api/categories?active=true').then(r => r.json())
+    fetch('/api/categories?active=true')
+      .then(r => safeJson<Category[]>(r))
       .then(d => { if (Array.isArray(d)) setCategories(d); }).catch(() => {});
   }, []);
 
@@ -33,8 +34,8 @@ export default function SearchClient() {
       if (cat) p.set('category', cat);
       if (t) p.set('tag', t);
       const res = await fetch(`/api/articles?${p}`);
-      const data = await res.json();
-      setArticles(data.articles || []); setTotal(data.total || 0);
+      const data = await safeJson<{ articles: Article[]; total: number }>(res);
+      setArticles(data?.articles || []); setTotal(data?.total || 0);
     } catch { setArticles([]); }
     finally { setLoading(false); }
   }, []);
@@ -72,8 +73,7 @@ export default function SearchClient() {
   };
 
   return (
-    <PublicLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6" style={{ fontFamily: 'var(--font-syne)' }}>Search Articles</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mb-8">
@@ -126,7 +126,6 @@ export default function SearchClient() {
             <p className="text-lg">Start typing to search all articles</p>
           </div>
         )}
-      </div>
-    </PublicLayout>
+    </div>
   );
 }
