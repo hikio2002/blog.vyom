@@ -104,10 +104,10 @@ export interface SiteSettings {
 
 const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   siteName: 'Vyom',
-  siteTagline: 'Your Tech Universe',
+  siteTagline: 'Tech News, Reviews, AI & Innovation',
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://vyom.quest',
   siteEmail: 'hi.kio2002@gmail.com',
-  metaDescription: 'Vyom is your go-to source for tech news, smartphone reviews, laptop guides, and AI insights.',
+  metaDescription: 'Latest technology news, smartphone launches, laptop reviews, AI updates, cybersecurity insights, gadget trends, and innovation stories from around the world.',
   googleAnalyticsId: '',
   adsensePublisherId: '',
   socialLinks: { twitter: '', facebook: '', instagram: '', youtube: '' },

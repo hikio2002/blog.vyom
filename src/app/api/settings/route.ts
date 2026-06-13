@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import { Setting } from '@/lib/models';
 import { requireAuth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 export async function GET() {
   try {
@@ -49,6 +50,12 @@ export async function PUT(req: NextRequest) {
     const updated = await Setting.find().lean();
     const obj: Record<string, any> = {};
     updated.forEach((s: any) => { obj[s.key] = s.value; });
+
+    // Settings affect <title>, meta description, footer, AdSense/GA on every
+    // page (via the root layout) — invalidate the full cache immediately so
+    // changes show up on next page load instead of waiting for revalidate window.
+    revalidatePath('/', 'layout');
+
     return NextResponse.json(obj);
   } catch (e: any) {
     console.error('PUT /api/settings error:', e);

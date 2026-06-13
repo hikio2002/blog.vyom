@@ -3,17 +3,20 @@ import Link from 'next/link';
 import { TrendingUp, Zap, Grid3x3 } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import ArticleCard from '@/components/blog/ArticleCard';
-import { getFeaturedArticles, getTrendingArticles, getPublishedArticles, getActiveCategories } from '@/lib/server-api';
+import { getFeaturedArticles, getTrendingArticles, getPublishedArticles, getActiveCategories, getSiteSettings } from '@/lib/server-api';
 import type { Article, Category } from '@/types';
 import AdBanner from '@/components/common/AdBanner';
 import LatestArticlesGrid from '@/components/blog/LatestArticlesGrid';
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: 'Vyom – Your Tech Universe',
-  description: 'Tech news, smartphone reviews, laptop guides, and AI insights.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    title: `${settings.siteName} – ${settings.siteTagline}`,
+    description: settings.metaDescription,
+  };
+}
 
 export default async function HomePage() {
   const PAGE_SIZE = 9;
@@ -40,9 +43,13 @@ export default async function HomePage() {
         {featured.length > 0 && (
           <section className="mb-12">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {featured[0] && <div className="lg:col-span-2"><ArticleCard article={featured[0] as Article} variant="featured" /></div>}
-              <div className="flex flex-col gap-4">
-                {featured.slice(1, 3).map((a: any) => <ArticleCard key={a._id} article={a as Article} variant="featured" />)}
+              {featured[0] && <div className="lg:col-span-2"><ArticleCard article={featured[0] as Article} variant="featured" className="aspect-[16/10] sm:aspect-video" /></div>}
+              <div className="flex flex-col gap-4 lg:h-full">
+                {featured.slice(1, 3).map((a: any) => (
+                  <div key={a._id} className="flex-1 min-h-[180px]">
+                    <ArticleCard article={a as Article} variant="featured" className="h-full" />
+                  </div>
+                ))}
               </div>
             </div>
           </section>

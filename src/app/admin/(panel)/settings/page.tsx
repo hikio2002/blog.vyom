@@ -25,7 +25,7 @@ interface Settings {
 
 const defaults: Settings = {
   siteName: 'Vyom',
-  siteTagline: 'Your Tech Universe',
+  siteTagline: 'Tech News, Reviews, AI & Innovation',
   siteUrl: 'https://vyom.quest',
   siteEmail: 'hi.kio2002@gmail.com',
   metaDescription: '',
@@ -163,7 +163,7 @@ export default function AdminSettingsPage() {
               <label className="label">Tagline</label>
               <input value={settings.siteTagline}
                 onChange={e => setField('siteTagline', e.target.value)}
-                className="input" placeholder="Your Tech Universe" />
+                className="input" placeholder="Tech News, Reviews, AI & Innovation" />
             </div>
             <div>
               <label className="label">Site URL</label>
@@ -183,7 +183,7 @@ export default function AdminSettingsPage() {
             <textarea value={settings.metaDescription}
               onChange={e => setField('metaDescription', e.target.value)}
               rows={3} className="input resize-none"
-              placeholder="Vyom is your go-to source for tech news, smartphone reviews and AI insights." />
+              placeholder="Latest technology news, smartphone launches, laptop reviews, AI updates, cybersecurity insights, gadget trends, and innovation stories from around the world." />
           </div>
         </Section>
 

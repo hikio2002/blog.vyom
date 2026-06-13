@@ -4,9 +4,9 @@ import { Clock, Eye } from 'lucide-react';
 import { formatDate, readingTimeLabel } from '@/lib/utils';
 import type { Article } from '@/types';
 
-interface Props { article: Article; variant?: 'default' | 'featured' | 'horizontal' | 'compact'; }
+interface Props { article: Article; variant?: 'default' | 'featured' | 'horizontal' | 'compact'; className?: string; }
 
-export default function ArticleCard({ article, variant = 'default' }: Props) {
+export default function ArticleCard({ article, variant = 'default', className = '' }: Props) {
   const href = `/blog/${article.slug}`;
 
   if (variant === 'horizontal') return (
@@ -27,21 +27,22 @@ export default function ArticleCard({ article, variant = 'default' }: Props) {
   );
 
   if (variant === 'featured') return (
-    <Link href={href} className="group block relative rounded-2xl overflow-hidden bg-gray-900 aspect-video">
+    <Link href={href} className={`group block relative rounded-2xl overflow-hidden bg-gray-900 ${className || 'aspect-video'}`}>
       {article.featuredImage && (
         <Image src={article.featuredImage} alt={article.title} fill className="object-cover opacity-70 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500" sizes="(max-width: 768px) 100vw, 50vw" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 max-h-[85%] overflow-hidden">
         {article.category && (
-          <span className="inline-block px-2.5 py-1 bg-brand-600 text-white text-xs font-bold rounded-full uppercase tracking-wider mb-2">{article.category.name}</span>
+          <span className="inline-block px-2.5 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full uppercase tracking-wider mb-2">{article.category.name}</span>
         )}
-        <h2 className="text-white text-lg lg:text-xl font-bold line-clamp-2 group-hover:text-brand-300 transition-colors" style={{ fontFamily: 'var(--font-syne)' }}>{article.title}</h2>
-        {article.excerpt && <p className="text-gray-300 text-sm mt-1.5 line-clamp-2 hidden sm:block">{article.excerpt}</p>}
-        <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
-          {article.author && <span>{article.author.name}</span>}
-          <span>·</span><span>{formatDate(article.publishedAt)}</span>
-          <span>·</span><span className="flex items-center gap-1"><Clock size={10} />{readingTimeLabel(article.readingTime)}</span>
+        <h2 className="text-white text-base lg:text-xl font-bold line-clamp-2 group-hover:text-indigo-300 transition-colors" style={{ fontFamily: 'var(--font-syne)' }}>{article.title}</h2>
+        {article.excerpt && <p className="text-gray-300 text-sm mt-1.5 line-clamp-1 lg:line-clamp-2 hidden sm:block">{article.excerpt}</p>}
+        <div className="flex items-center gap-2 mt-2 lg:mt-3 text-xs text-gray-400">
+          {article.author && <span className="truncate max-w-[100px]">{article.author.name}</span>}
+          <span>·</span><span className="whitespace-nowrap">{formatDate(article.publishedAt)}</span>
+          <span className="hidden sm:inline">·</span>
+          <span className="hidden sm:flex items-center gap-1"><Clock size={10} />{readingTimeLabel(article.readingTime)}</span>
         </div>
       </div>
     </Link>

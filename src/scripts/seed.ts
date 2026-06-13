@@ -62,9 +62,9 @@ async function seed() {
 
   // Default settings
   const defaults: Record<string, any> = {
-    siteName: 'Vyom', siteTagline: 'Your Tech Universe',
+    siteName: 'Vyom', siteTagline: 'Tech News, Reviews, AI & Innovation',
     siteUrl: 'https://vyom.quest', siteEmail: 'hi.kio2002@gmail.com',
-    metaDescription: 'Vyom is your go-to source for tech news, smartphone reviews, laptop guides, and AI insights.',
+    metaDescription: 'Latest technology news, smartphone launches, laptop reviews, AI updates, cybersecurity insights, gadget trends, and innovation stories from around the world.',
     socialLinks: { twitter: '', facebook: '', instagram: '', youtube: '' },
     googleAnalyticsId: '', adsensePublisherId: '',
   };
