@@ -4,6 +4,7 @@ import { Article } from '@/lib/models';
 import { requireAuth } from '@/lib/auth';
 import { makeSlug, calcReadingTime, generateExcerpt } from '@/lib/utils';
 import mongoose from 'mongoose';
+import { revalidatePath } from 'next/cache';
 
 type Params = { params: { id: string } };
 
@@ -70,6 +71,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const updated = await Article.findByIdAndUpdate(params.id, { $set: body }, { new: true })
       .populate('category', 'name slug')
       .populate('author', 'name avatar slug');
+
+    // Edited/published articles should reflect immediately on the site
+    // and sitemap, not wait for the revalidate window.
+    if (updated) {
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+      revalidatePath(`/blog/${(updated as any).slug}`);
+      if ((existing as any).slug !== (updated as any).slug) {
+        // Old slug becomes a 404 immediately too
+        revalidatePath(`/blog/${(existing as any).slug}`);
+      }
+    }
+
     return NextResponse.json(updated);
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
@@ -81,7 +95,14 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (auth instanceof NextResponse) return auth;
   try {
     await dbConnect();
-    await Article.findByIdAndDelete(params.id);
+    const deleted = await Article.findByIdAndDelete(params.id).lean();
+
+    if (deleted) {
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+      revalidatePath(`/blog/${(deleted as any).slug}`);
+    }
+
     return NextResponse.json({ message: 'Deleted' });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

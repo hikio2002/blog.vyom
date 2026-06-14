@@ -1,14 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Search, X, Loader2 } from 'lucide-react';
 import ArticleCard from '@/components/blog/ArticleCard';
 import type { Article, Category } from '@/types';
 import { safeJson } from '@/lib/fetch-json';
 
 export default function SearchClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [q, setQ] = useState(searchParams.get('q') || '');
   const [tag, setTag] = useState(searchParams.get('tag') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
@@ -53,14 +52,40 @@ export default function SearchClient() {
     }
   }, [doSearch, searchParams]);
 
+  // Live search — debounced, fires as the user types or changes the category.
+  // Skips the very first render (handled by the mount effect above) so we
+  // don't double-fetch on initial load.
+  const liveSearchSkipFirst = useRef(true);
+  useEffect(() => {
+    if (liveSearchSkipFirst.current) {
+      liveSearchSkipFirst.current = false;
+      return;
+    }
+    const handle = setTimeout(() => {
+      doSearch(q, category, tag);
+      // Keep the URL in sync without a full navigation
+      const p = new URLSearchParams();
+      if (q) p.set('q', q);
+      if (category) p.set('category', category);
+      if (tag) p.set('tag', tag);
+      const next = p.toString() ? `/search?${p}` : '/search';
+      window.history.replaceState(null, '', next);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, category]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Instant search on submit (bypasses debounce)
+    doSearch(q, category, tag);
     const p = new URLSearchParams();
     if (q) p.set('q', q);
     if (category) p.set('category', category);
     if (tag) p.set('tag', tag);
-    router.push(`/search?${p}`);
-    doSearch(q, category, tag);
+    const next = p.toString() ? `/search?${p}` : '/search';
+    window.history.replaceState(null, '', next);
   };
 
   const clearTag = () => {
@@ -69,7 +94,8 @@ export default function SearchClient() {
     const p = new URLSearchParams();
     if (q) p.set('q', q);
     if (category) p.set('category', category);
-    router.push(`/search?${p}`);
+    const next = p.toString() ? `/search?${p}` : '/search';
+    window.history.replaceState(null, '', next);
   };
 
   return (
@@ -79,7 +105,10 @@ export default function SearchClient() {
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mb-8">
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search articles, topics, tags…" className="input pl-10" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Start typing to search…" className="input pl-10 pr-10" />
+            {loading && (
+              <Loader2 size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-indigo-400 animate-spin" />
+            )}
           </div>
           <select value={category} onChange={e => setCategory(e.target.value)} className="input sm:w-48">
             <option value="">All categories</option>
@@ -123,7 +152,7 @@ export default function SearchClient() {
         {!searched && !loading && (
           <div className="text-center py-16 text-gray-400">
             <Search size={48} className="mx-auto mb-4 opacity-20" />
-            <p className="text-lg">Start typing to search all articles</p>
+            <p className="text-lg">Results appear instantly as you type</p>
           </div>
         )}
     </div>

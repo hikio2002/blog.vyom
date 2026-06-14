@@ -3,6 +3,7 @@ import { dbConnect } from '@/lib/db';
 import { Article } from '@/lib/models';
 import { requireAuth } from '@/lib/auth';
 import { makeSlug, calcReadingTime, generateExcerpt } from '@/lib/utils';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(req: NextRequest) {
   try {
@@ -72,6 +73,19 @@ export async function POST(req: NextRequest) {
     const article = await Article.create({
       ...body, slug, excerpt, readingTime, metaTitle, metaDescription, seoKeywords, publishedAt,
     });
+
+    // New published articles should appear immediately on the homepage,
+    // category pages, and sitemap — not wait for the revalidate window.
+    if (article.status === 'published') {
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+      revalidatePath(`/blog/${article.slug}`);
+      // Category pages use a 60s revalidate window and will pick up the
+      // new article shortly; revalidating by slug would require an extra
+      // populate() here, which isn't worth it for a 1-minute delay.
+      revalidatePath('/category/[slug]', 'page');
+    }
+
     return NextResponse.json(article, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

@@ -3,6 +3,7 @@
  * Used in Server Components (pages) to avoid HTTP round-trips.
  * Never import this in Client Components ('use client').
  */
+import { cache } from 'react';
 import { dbConnect } from './db';
 import { Article, Category, Author } from './models';
 
@@ -40,18 +41,29 @@ export async function getTrendingArticles(limit = 5) {
     .sort({ viewCount: -1, publishedAt: -1 }).limit(limit).select('-content -revisions').lean();
 }
 
-export async function getArticleBySlug(slug: string, incrementView = false) {
+/**
+ * Wrapped in React's `cache()` so generateMetadata() and the page component
+ * — which both call this with the same slug during one request — share a
+ * single DB query instead of issuing it twice (this was doubling article
+ * page load time).
+ */
+export const getArticleBySlug = cache(async (slug: string) => {
   await dbConnect();
   const article = await Article.findOne({ slug, status: 'published' })
     .populate('category', 'name slug description')
     .populate('author', 'name avatar slug bio socialLinks')
     .lean();
-  if (!article) return null;
-  if (incrementView) {
-    // Fire-and-forget
-    Article.findByIdAndUpdate((article as any)._id, { $inc: { viewCount: 1 } }).exec();
-  }
   return article;
+});
+
+/**
+ * Fire-and-forget view counter — call once from the page body only
+ * (not from generateMetadata). Does not block rendering.
+ */
+export function incrementViewCount(articleId: string) {
+  dbConnect().then(() => {
+    Article.findByIdAndUpdate(articleId, { $inc: { viewCount: 1 } }).exec();
+  }).catch(() => {});
 }
 
 export async function getRelatedArticles(articleId: string, categoryId: string, limit = 3) {

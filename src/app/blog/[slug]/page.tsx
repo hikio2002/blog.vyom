@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -7,7 +8,7 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import ArticleCard from '@/components/blog/ArticleCard';
 import ShareButtons from '@/components/blog/ShareButtons';
 import Breadcrumb from '@/components/blog/Breadcrumb';
-import { getArticleBySlug, getRelatedArticles } from '@/lib/server-api';
+import { getArticleBySlug, getRelatedArticles, incrementViewCount } from '@/lib/server-api';
 import type { Article } from '@/types';
 import AdBanner from '@/components/common/AdBanner';
 
@@ -42,12 +43,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const article = await getArticleBySlug(params.slug, true) as any;
+  const article = await getArticleBySlug(params.slug) as any;
   if (!article) notFound();
 
-  const related = article.category
-    ? await getRelatedArticles(String(article._id), String(article.category._id || article.category))
-    : [];
+  // Fire-and-forget — doesn't block rendering, and doesn't break the
+  // React cache() dedup between this call and generateMetadata().
+  incrementViewCount(String(article._id));
 
   const url = absoluteUrl(`/blog/${article.slug}`);
 
@@ -107,7 +108,9 @@ export default async function BlogPostPage({ params }: Props) {
 
             <div className="article-body" dangerouslySetInnerHTML={{ __html: article.content }} />
 
-            <AdBanner placement="in-article" className="my-8" />
+            <Suspense fallback={null}>
+              <AdBanner placement="in-article" className="my-8" />
+            </Suspense>
 
             {article.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
@@ -139,13 +142,10 @@ export default async function BlogPostPage({ params }: Props) {
               </div>
             )}
 
-            {related.length > 0 && (
-              <section className="mt-10">
-                <h2 className="section-title mb-5">Related Articles</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {(related as any[]).map(a => <ArticleCard key={a._id} article={a as Article} />)}
-                </div>
-              </section>
+            {article.category && (
+              <Suspense fallback={<RelatedArticlesSkeleton />}>
+                <RelatedArticles articleId={String(article._id)} categoryId={String(article.category._id || article.category)} />
+              </Suspense>
             )}
           </article>
 
@@ -163,11 +163,40 @@ export default async function BlogPostPage({ params }: Props) {
                 </div>
               </div>
 
-              <AdBanner placement="sidebar" />
+              <Suspense fallback={null}>
+                <AdBanner placement="sidebar" />
+              </Suspense>
             </div>
           </aside>
         </div>
       </div>
     </PublicLayout>
+  );
+}
+
+async function RelatedArticles({ articleId, categoryId }: { articleId: string; categoryId: string }) {
+  const related = await getRelatedArticles(articleId, categoryId);
+  if (!related || related.length === 0) return null;
+
+  return (
+    <section className="mt-10">
+      <h2 className="section-title mb-5">Related Articles</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {(related as any[]).map(a => <ArticleCard key={a._id} article={a as Article} />)}
+      </div>
+    </section>
+  );
+}
+
+function RelatedArticlesSkeleton() {
+  return (
+    <section className="mt-10">
+      <div className="h-6 w-40 bg-gray-100 dark:bg-gray-800 rounded mb-5 animate-pulse" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {Array(3).fill(0).map((_, i) => (
+          <div key={i} className="card h-64 animate-pulse bg-gray-100 dark:bg-gray-800" />
+        ))}
+      </div>
+    </section>
   );
 }
