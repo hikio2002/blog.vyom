@@ -102,7 +102,7 @@ export default async function BlogPostPage({ params }: Props) {
 
             {article.featuredImage && (
               <div className="relative aspect-video rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
-                <Image src={article.featuredImage} alt={article.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 75vw" priority />
+                <Image src={article.featuredImage} alt={article.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 960px" priority />
               </div>
             )}
 

@@ -4,6 +4,7 @@
  * Never import this in Client Components ('use client').
  */
 import { cache } from 'react';
+import mongoose from 'mongoose';
 import { dbConnect } from './db';
 import { Article, Category, Author } from './models';
 
@@ -46,14 +47,42 @@ export async function getTrendingArticles(limit = 5) {
  * — which both call this with the same slug during one request — share a
  * single DB query instead of issuing it twice (this was doubling article
  * page load time).
+ *
+ * Uses $lookup aggregation instead of .populate() — populate() issues
+ * separate queries to the Category and Author collections (3 round-trips
+ * total for one article). $lookup does it all in a single query.
  */
 export const getArticleBySlug = cache(async (slug: string) => {
   await dbConnect();
-  const article = await Article.findOne({ slug, status: 'published' })
-    .populate('category', 'name slug description')
-    .populate('author', 'name avatar slug bio socialLinks')
-    .lean();
-  return article;
+  const results = await Article.aggregate([
+    { $match: { slug, status: 'published' } },
+    { $limit: 1 },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'category',
+        foreignField: '_id',
+        as: 'category',
+        pipeline: [{ $project: { name: 1, slug: 1, description: 1 } }],
+      },
+    },
+    {
+      $lookup: {
+        from: 'authors',
+        localField: 'author',
+        foreignField: '_id',
+        as: 'author',
+        pipeline: [{ $project: { name: 1, avatar: 1, slug: 1, bio: 1, socialLinks: 1 } }],
+      },
+    },
+    {
+      $set: {
+        category: { $arrayElemAt: ['$category', 0] },
+        author: { $arrayElemAt: ['$author', 0] },
+      },
+    },
+  ]);
+  return results[0] || null;
 });
 
 /**
@@ -68,9 +97,36 @@ export function incrementViewCount(articleId: string) {
 
 export async function getRelatedArticles(articleId: string, categoryId: string, limit = 3) {
   await dbConnect();
-  return Article.find({ _id: { $ne: articleId }, category: categoryId, status: 'published' })
-    .populate('category', 'name slug').populate('author', 'name avatar slug')
-    .sort({ publishedAt: -1 }).limit(limit).select('-content -revisions').lean();
+  return Article.aggregate([
+    {
+      $match: {
+        _id: { $ne: new mongoose.Types.ObjectId(articleId) },
+        category: new mongoose.Types.ObjectId(categoryId),
+        status: 'published',
+      },
+    },
+    { $sort: { publishedAt: -1 } },
+    { $limit: limit },
+    { $project: { content: 0, revisions: 0 } },
+    {
+      $lookup: {
+        from: 'categories', localField: 'category', foreignField: '_id', as: 'category',
+        pipeline: [{ $project: { name: 1, slug: 1 } }],
+      },
+    },
+    {
+      $lookup: {
+        from: 'authors', localField: 'author', foreignField: '_id', as: 'author',
+        pipeline: [{ $project: { name: 1, avatar: 1, slug: 1 } }],
+      },
+    },
+    {
+      $set: {
+        category: { $arrayElemAt: ['$category', 0] },
+        author: { $arrayElemAt: ['$author', 0] },
+      },
+    },
+  ]);
 }
 
 export async function getCategoryBySlug(slug: string) {
@@ -130,7 +186,7 @@ const SITE_SETTINGS_DEFAULTS: SiteSettings = {
  * Used by the root layout for <title>, <meta description>, OpenGraph tags, etc.
  * Cached for 60s via Next.js `revalidate` on the calling page/layout.
  */
-export async function getSiteSettings(): Promise<SiteSettings> {
+export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   try {
     await dbConnect();
     const docs = await Setting.find().lean();
@@ -156,20 +212,42 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     console.error('getSiteSettings error:', e);
     return SITE_SETTINGS_DEFAULTS;
   }
-}
+});
 
 // ─── Advertisements ─────────────────────────────────────────────────────────
 import { Ad } from './models';
 
-export async function getAdsByPlacement(placement: string, limit = 1) {
+/**
+ * Fetches ALL active ads in a single query, cached per-request via
+ * React.cache(). A typical page renders 2-4 AdBanner instances (header,
+ * footer, sidebar, in-article) — without this, each one issued its own
+ * DB round-trip (4 extra queries per page, a major source of latency).
+ */
+export const getAllActiveAds = cache(async () => {
   try {
     await dbConnect();
-    return await Ad.find({ placement, isActive: true })
-      .sort({ order: 1, createdAt: -1 })
-      .limit(limit)
+    return await Ad.find({ isActive: true }).sort({ order: 1, createdAt: -1 }).lean();
+  } catch (e) {
+    console.error('getAllActiveAds error:', e);
+    return [];
+  }
+});
+
+export async function getAdsByPlacement(placement: string, limit = 1) {
+  const all = await getAllActiveAds();
+  return (all as any[]).filter(ad => ad.placement === placement).slice(0, limit);
+}
+
+export async function getFooterCategories() {
+  try {
+    await dbConnect();
+    return await Category.find({ isActive: true, showInFooter: true })
+      .sort({ order: 1, name: 1 })
+      .limit(8)
+      .select('name slug')
       .lean();
   } catch (e) {
-    console.error('getAdsByPlacement error:', e);
+    console.error('getFooterCategories error:', e);
     return [];
   }
 }
