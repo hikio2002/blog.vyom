@@ -8,7 +8,9 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import ArticleCard from '@/components/blog/ArticleCard';
 import ShareButtons from '@/components/blog/ShareButtons';
 import Breadcrumb from '@/components/blog/Breadcrumb';
-import { getArticleBySlug, getRelatedArticles, incrementViewCount, getAllArticleSlugs } from '@/lib/server-api';
+import CommentSection from '@/components/blog/CommentSection';
+import { getArticleBySlug, getRelatedArticles, getAllArticleSlugs } from '@/lib/server-api';
+import ViewTracker from '@/components/blog/ViewTracker';
 import type { Article } from '@/types';
 import AdBanner from '@/components/common/AdBanner';
 
@@ -59,9 +61,6 @@ export default async function BlogPostPage({ params }: Props) {
   const article = await getArticleBySlug(params.slug) as any;
   if (!article) notFound();
 
-  // Fire-and-forget — doesn't block rendering, and doesn't break the
-  // React cache() dedup between this call and generateMetadata().
-  incrementViewCount(String(article._id));
 
   const url = absoluteUrl(`/blog/${article.slug}`);
 
@@ -160,6 +159,8 @@ export default async function BlogPostPage({ params }: Props) {
                 <RelatedArticles articleId={String(article._id)} categoryId={String(article.category._id || article.category)} />
               </Suspense>
             )}
+
+            <CommentSection articleId={String(article._id)} />
           </article>
 
           <aside className="hidden lg:block">
@@ -183,6 +184,7 @@ export default async function BlogPostPage({ params }: Props) {
           </aside>
         </div>
       </div>
+      <ViewTracker articleId={String(article._id)} />
     </PublicLayout>
   );
 }

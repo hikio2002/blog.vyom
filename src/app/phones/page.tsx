@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Smartphone } from 'lucide-react';
@@ -60,7 +61,9 @@ export default async function PhonesPage() {
           </div>
         )}
 
-        <AdBanner placement="homepage-banner" className="mb-10" />
+        <Suspense fallback={null}>
+          <AdBanner placement="homepage-banner" className="mb-10" />
+        </Suspense>
 
         {/* Featured phones */}
         {featured.length > 0 ? (

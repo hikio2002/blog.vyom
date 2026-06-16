@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -48,7 +49,9 @@ export default async function PhoneCategoryPage({ params, searchParams }: Props)
           {cat.description && <p className="text-gray-500 dark:text-gray-400 mt-2">{cat.description}</p>}
         </div>
 
-        <AdBanner placement="header" className="mb-8" />
+        <Suspense fallback={null}>
+          <AdBanner placement="header" className="mb-8" />
+        </Suspense>
 
         {phones.length === 0 ? (
           <div className="text-center py-16 text-gray-400">

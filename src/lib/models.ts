@@ -310,6 +310,45 @@ const PhoneSchema = new Schema<IPhone>(
 PhoneSchema.index({ category: 1, isActive: 1 });
 PhoneSchema.index({ slug: 1 });
 
+// ─── Monthly View Stats ─────────────────────────────────────────────────────
+export interface IMonthlyStats extends Document {
+  month: string; // 'YYYY-MM' format, e.g. '2026-06'
+  views: number;
+}
+
+const MonthlyStatsSchema = new Schema<IMonthlyStats>(
+  {
+    month: { type: String, required: true, unique: true }, // 'YYYY-MM'
+    views: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
+// ─── Comment ────────────────────────────────────────────────────────────────
+export interface IComment extends Document {
+  article: Types.ObjectId;
+  parent?: Types.ObjectId; // top-level comment if undefined; reply if set
+  name: string;
+  email: string;
+  content: string;
+  status: 'pending' | 'approved' | 'spam';
+}
+
+const CommentSchema = new Schema<IComment>(
+  {
+    article: { type: Schema.Types.ObjectId, ref: 'Article', required: true },
+    parent:  { type: Schema.Types.ObjectId, ref: 'Comment', default: null },
+    name:    { type: String, required: true, trim: true, maxlength: 80 },
+    email:   { type: String, required: true, trim: true, lowercase: true, maxlength: 120 },
+    content: { type: String, required: true, trim: true, maxlength: 2000 },
+    status:  { type: String, enum: ['pending', 'approved', 'spam'], default: 'approved' },
+  },
+  { timestamps: true }
+);
+
+CommentSchema.index({ article: 1, status: 1, createdAt: 1 });
+CommentSchema.index({ parent: 1 });
+
 // ─── Export models (safe for Next.js hot-reload) ──────────────────────────────
 export const User = (mongoose.models.User as mongoose.Model<IUser>) ||
   mongoose.model<IUser>('User', UserSchema);
@@ -333,3 +372,7 @@ export const PhoneCategory = (mongoose.models.PhoneCategory as mongoose.Model<IP
   mongoose.model<IPhoneCategory>('PhoneCategory', PhoneCategorySchema);
 export const Phone = (mongoose.models.Phone as mongoose.Model<IPhone>) ||
   mongoose.model<IPhone>('Phone', PhoneSchema);
+export const MonthlyStats = (mongoose.models.MonthlyStats as mongoose.Model<IMonthlyStats>) ||
+  mongoose.model<IMonthlyStats>('MonthlyStats', MonthlyStatsSchema);
+export const Comment = (mongoose.models.Comment as mongoose.Model<IComment>) ||
+  mongoose.model<IComment>('Comment', CommentSchema);

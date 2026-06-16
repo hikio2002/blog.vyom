@@ -133,3 +133,15 @@ export interface Phone {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Comment {
+  _id: string;
+  article: string;
+  parent: string | null;
+  name: string;
+  email: string;
+  content: string;
+  status: 'pending' | 'approved' | 'spam';
+  createdAt: string;
+  replies?: Comment[];
+}

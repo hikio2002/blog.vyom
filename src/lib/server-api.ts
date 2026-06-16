@@ -6,7 +6,7 @@
 import { cache } from 'react';
 import mongoose from 'mongoose';
 import { dbConnect } from './db';
-import { Article, Category, Author } from './models';
+import { Article, Category, Author, MonthlyStats, Setting, Ad, PhoneCategory, Phone, Comment } from './models';
 
 export async function getPublishedArticles(opts: {
   page?: number; limit?: number; categoryId?: string; search?: string; sort?: string;
@@ -85,15 +85,8 @@ export const getArticleBySlug = cache(async (slug: string) => {
   return results[0] || null;
 });
 
-/**
- * Fire-and-forget view counter — call once from the page body only
- * (not from generateMetadata). Does not block rendering.
- */
-export function incrementViewCount(articleId: string) {
-  dbConnect().then(() => {
-    Article.findByIdAndUpdate(articleId, { $inc: { viewCount: 1 } }).exec();
-  }).catch(() => {});
-}
+// View counting is handled client-side via POST /api/articles/[id]/view
+// to avoid counting bot crawls, ISR revalidations, and prefetch requests.
 
 export async function getRelatedArticles(articleId: string, categoryId: string, limit = 3) {
   await dbConnect();
@@ -152,7 +145,6 @@ export async function getArticlesByAuthor(authorId: string) {
 }
 
 // ─── Site Settings ──────────────────────────────────────────────────────────
-import { Setting } from './models';
 
 export interface SiteSettings {
   siteName: string;
@@ -215,7 +207,6 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
 });
 
 // ─── Advertisements ─────────────────────────────────────────────────────────
-import { Ad } from './models';
 
 /**
  * Fetches ALL active ads in a single query, cached per-request via
@@ -306,7 +297,6 @@ export async function getAllAuthorSlugs() {
 }
 
 // ─── Phones ─────────────────────────────────────────────────────────────────
-import { PhoneCategory, Phone } from './models';
 
 export async function getActivePhoneCategories() {
   try {

@@ -1,11 +1,14 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { FileText, Eye, CheckCircle, Clock, Plus, TrendingUp, MessageSquare, Users, FolderOpen, Settings } from 'lucide-react';
+import { FileText, Eye, CheckCircle, Clock, Plus, TrendingUp, MessageSquare, Users, FolderOpen, Settings, Calendar } from 'lucide-react';
 import { formatRelative } from '@/lib/utils';
 import { safeJson } from '@/lib/fetch-json';
+import MonthlyViewsChart from '@/components/admin/MonthlyViewsChart';
 import type { Article } from '@/types';
 import Cookies from 'js-cookie';
+
+interface MonthlyView { month: string; label: string; views: number; }
 
 interface DashboardData {
   total: number;
@@ -13,6 +16,8 @@ interface DashboardData {
   drafts: number;
   scheduled: number;
   totalViews: number;
+  currentMonthViews: number;
+  monthlyViews: MonthlyView[];
   unreadMessages: number;
   recent: Article[];
 }
@@ -69,17 +74,31 @@ export default function AdminDashboard() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {Array(4).fill(0).map((_, i) => <div key={i} className="card h-24 animate-pulse bg-gray-100 dark:bg-gray-800" />)}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          {Array(5).fill(0).map((_, i) => <div key={i} className="card h-24 animate-pulse bg-gray-100 dark:bg-gray-800" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard icon={FileText}    label="Total Articles" value={data?.total || 0}     color="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" />
           <StatCard icon={CheckCircle} label="Published"      value={data?.published || 0} color="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400" />
           <StatCard icon={Clock}       label="Drafts"         value={data?.drafts || 0}    color="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400" />
           <StatCard icon={Eye}         label="Total Views"    value={data?.totalViews || 0} color="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" />
+          <StatCard icon={Calendar}    label="Views This Month" value={data?.currentMonthViews || 0} color="bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400" />
         </div>
       )}
+
+      {/* Monthly views chart */}
+      <div className="card p-5 mb-6">
+        <h2 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-1" style={{ fontFamily: 'var(--font-syne)' }}>
+          <TrendingUp size={16} className="text-indigo-500" />Monthly Views (last 12 months)
+        </h2>
+        <p className="text-xs text-gray-400 mb-4">Resets at the start of each month — past months remain unchanged.</p>
+        {loading ? (
+          <div className="h-56 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+        ) : (
+          <MonthlyViewsChart data={data?.monthlyViews || []} />
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 card">

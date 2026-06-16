@@ -13,7 +13,6 @@ export async function GET(req: NextRequest, { params }: Params) {
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const admin = searchParams.get('admin') === 'true';
-    const view = searchParams.get('view') === 'true';
 
     const isObjectId = mongoose.isValidObjectId(params.id);
     const query: any = isObjectId ? { _id: params.id } : { slug: params.id };
@@ -25,11 +24,6 @@ export async function GET(req: NextRequest, { params }: Params) {
       .lean();
 
     if (!article) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
-
-    // Increment view count asynchronously
-    if (view && !admin) {
-      Article.findByIdAndUpdate((article as any)._id, { $inc: { viewCount: 1 } }).exec();
-    }
 
     return NextResponse.json(article);
   } catch (e: any) {
