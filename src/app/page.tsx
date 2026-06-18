@@ -1,12 +1,11 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { TrendingUp, Zap, Grid3x3, Smartphone } from 'lucide-react';
+import { TrendingUp, Zap, Grid3x3, Smartphone, Laptop as LaptopIcon, PenTool, Camera as CameraIcon } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import ArticleCard from '@/components/blog/ArticleCard';
-import { getFeaturedArticles, getTrendingArticles, getPublishedArticles, getActiveCategories, getSiteSettings, getActivePhoneCategories } from '@/lib/server-api';
-import { getPhoneCategoryIcon } from '@/lib/phone-icons';
-import type { Article, Category, PhoneCategory } from '@/types';
+import { getFeaturedArticles, getTrendingArticles, getPublishedArticles, getActiveCategories, getSiteSettings } from '@/lib/server-api';
+import type { Article, Category } from '@/types';
 import AdBanner from '@/components/common/AdBanner';
 import LatestArticlesGrid from '@/components/blog/LatestArticlesGrid';
 
@@ -22,15 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const PAGE_SIZE = 9;
-  let featured: any[] = [], latest: any[] = [], totalPages = 1, trending: any[] = [], categories: any[] = [], phoneCategories: any[] = [];
+  let featured: any[] = [], latest: any[] = [], totalPages = 1, trending: any[] = [], categories: any[] = [];
   try {
     let latestResult;
-    [featured, latestResult, trending, categories, phoneCategories] = await Promise.all([
+    [featured, latestResult, trending, categories] = await Promise.all([
       getFeaturedArticles(3),
       getPublishedArticles({ limit: PAGE_SIZE, sort: '-publishedAt' }),
       getTrendingArticles(5),
       getActiveCategories(),
-      getActivePhoneCategories(),
     ]);
     latest = latestResult.articles;
     totalPages = latestResult.totalPages;
@@ -115,26 +113,25 @@ export default async function HomePage() {
               </div>
             )}
 
-            {phoneCategories.length > 0 && (
-              <div className="card p-5">
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4 text-base" style={{ fontFamily: 'var(--font-syne)' }}>
-                  <Smartphone size={16} className="text-indigo-500" />Browse Phones
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {(phoneCategories as PhoneCategory[]).map(cat => {
-                    const Icon = getPhoneCategoryIcon(cat.icon);
-                    return (
-                      <Link key={cat._id} href={`/phones/category/${cat.slug}`}
-                        className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors">
-                        <Icon size={14} className="text-indigo-400 flex-shrink-0" />
-                        <span className="truncate">{cat.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-                <Link href="/phones" className="block mt-3 text-center text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Phone Finder →</Link>
+            <div className="card p-5">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4 text-base" style={{ fontFamily: 'var(--font-syne)' }}>
+                <Smartphone size={16} className="text-indigo-500" />Browse Devices
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/phones" className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors">
+                  <Smartphone size={14} className="text-indigo-400 flex-shrink-0" /><span className="truncate">Phones</span>
+                </Link>
+                <Link href="/laptops" className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors">
+                  <LaptopIcon size={14} className="text-indigo-400 flex-shrink-0" /><span className="truncate">Laptops</span>
+                </Link>
+                <Link href="/tablets" className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors">
+                  <PenTool size={14} className="text-indigo-400 flex-shrink-0" /><span className="truncate">Tablets</span>
+                </Link>
+                <Link href="/cameras" className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors">
+                  <CameraIcon size={14} className="text-indigo-400 flex-shrink-0" /><span className="truncate">Cameras</span>
+                </Link>
               </div>
-            )}
+            </div>
 
             <Suspense fallback={null}>
               <AdBanner placement="sidebar" />

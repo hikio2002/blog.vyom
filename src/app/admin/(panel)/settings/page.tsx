@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Save, Globe, Share2, BarChart2, DollarSign, CheckCircle } from 'lucide-react';
+import { Save, Globe, Share2, BarChart2, DollarSign, CheckCircle, Megaphone, Settings as SettingsIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import { safeJson } from '@/lib/fetch-json';
+import AdsPanel from '@/components/admin/AdsPanel';
 
 interface SocialLinks {
   twitter: string;
@@ -51,6 +52,7 @@ export default function AdminSettingsPage() {
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [saved,    setSaved]    = useState(false);
+  const [tab, setTab] = useState<'general' | 'ads'>('general');
 
   const load = useCallback(async () => {
     try {
@@ -139,7 +141,7 @@ export default function AdminSettingsPage() {
           <p className="text-sm text-gray-400 mt-0.5">Site-wide configuration</p>
         </div>
         <button onClick={save} disabled={saving}
-          className={`btn-primary gap-2 ${saved ? 'bg-green-600 hover:bg-green-700' : ''}`}>
+          className={`btn-primary gap-2 ${saved ? 'bg-green-600 hover:bg-green-700' : ''} ${tab !== 'general' ? 'invisible' : ''}`}>
           {saved
             ? <><CheckCircle size={16} />Saved!</>
             : saving
@@ -149,6 +151,33 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => setTab('general')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            tab === 'general'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <SettingsIcon size={15} />General
+        </button>
+        <button
+          onClick={() => setTab('ads')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            tab === 'ads'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <Megaphone size={15} />Ad Placements
+        </button>
+      </div>
+
+      {tab === 'ads' ? (
+        <AdsPanel />
+      ) : (
       <div className="space-y-6">
         {/* General */}
         <Section icon={Globe} title="General">
@@ -243,6 +272,7 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

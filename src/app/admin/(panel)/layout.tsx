@@ -5,23 +5,58 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import {
   LayoutDashboard, FileText, Tag, Users, FolderOpen,
-  Settings, MessageSquare, LogOut, Menu, Sun, Moon, ExternalLink, Megaphone, Smartphone, Layers, MessageCircle,
+  Settings, MessageSquare, LogOut, Menu, Sun, Moon, ExternalLink,
+  Smartphone, Layers, Laptop, PenTool, Camera as CameraIcon,
+  ChevronDown, FolderKanban, Inbox,
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 
-const NAV = [
-  { href: '/admin',            label: 'Dashboard',  icon: LayoutDashboard, exact: true },
-  { href: '/admin/articles',   label: 'Articles',   icon: FileText },
-  { href: '/admin/categories', label: 'Categories', icon: FolderOpen },
-  { href: '/admin/phones',     label: 'Phones',     icon: Smartphone },
-  { href: '/admin/phone-categories', label: 'Phone Categories', icon: Layers },
-  { href: '/admin/authors',    label: 'Authors',    icon: Users },
-  { href: '/admin/tags',       label: 'Tags',       icon: Tag },
-  { href: '/admin/messages',   label: 'Messages',   icon: MessageSquare },
-  { href: '/admin/comments',   label: 'Comments',   icon: MessageCircle },
-  { href: '/admin/ads',        label: 'Ads',        icon: Megaphone },
-  { href: '/admin/settings',   label: 'Settings',   icon: Settings },
+// Flat top-level items (no sub-items)
+const TOP_NAV = [
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/admin/messages', label: 'Inbox', icon: Inbox },
 ];
+
+// Grouped nav — each group renders as a collapsible section with sub-links.
+// This replaces the old flat 13-item list, which had become cluttered as
+// device types (Phones, Laptops, Tablets, Cameras) were added.
+const NAV_GROUPS = [
+  {
+    id: 'content',
+    label: 'Content',
+    icon: FolderKanban,
+    items: [
+      { href: '/admin/articles',   label: 'Articles',   icon: FileText },
+      { href: '/admin/categories', label: 'Article Categories', icon: FolderOpen },
+      { href: '/admin/authors',    label: 'Authors',    icon: Users },
+      { href: '/admin/tags',       label: 'Tags',        icon: Tag },
+    ],
+  },
+  {
+    id: 'devices',
+    label: 'Devices',
+    icon: Smartphone,
+    items: [
+      { href: '/admin/phones',            label: 'Phones',             icon: Smartphone },
+      { href: '/admin/phone-categories',  label: 'Phone Categories',   icon: Layers },
+      { href: '/admin/laptops',           label: 'Laptops',            icon: Laptop },
+      { href: '/admin/laptop-categories', label: 'Laptop Categories',  icon: Layers },
+      { href: '/admin/tablets',           label: 'Drawing Tablets',    icon: PenTool },
+      { href: '/admin/tablet-categories', label: 'Tablet Categories',  icon: Layers },
+      { href: '/admin/cameras',           label: 'Cameras',            icon: CameraIcon },
+      { href: '/admin/camera-categories', label: 'Camera Categories',  icon: Layers },
+    ],
+  },
+];
+
+const BOTTOM_NAV = [
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
+];
+
+const ALL_HREFS_BY_GROUP: Record<string, string[]> = NAV_GROUPS.reduce((acc, g) => {
+  acc[g.id] = g.items.map(i => i.href);
+  return acc;
+}, {} as Record<string, string[]>);
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
@@ -34,6 +69,10 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   const [themeReady,  setThemeReady]  = useState(false);
   const [authed,      setAuthed]      = useState(false);
 
+  // Track which groups are expanded. A group auto-opens if the current
+  // route is inside it, so refreshing/deep-linking never hides the active page.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     setThemeReady(true);
 
@@ -43,10 +82,8 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
       return;
     }
 
-    // Token exists — show the panel right away
     setAuthed(true);
 
-    // Load user info in background
     fetch('/api/auth', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(u => {
@@ -54,15 +91,25 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
           setUserName(u.name  || 'Admin');
           setUserEmail(u.email || '');
         } else {
-          // Token rejected by server — log out
           Cookies.remove('vyom_token');
           router.replace('/admin/login');
         }
       })
-      .catch(() => {
-        // Network error — keep showing panel, server will block bad requests
-      });
+      .catch(() => {});
   }, [router]);
+
+  // Auto-expand whichever group contains the active route
+  useEffect(() => {
+    setOpenGroups(prev => {
+      const next = { ...prev };
+      for (const [groupId, hrefs] of Object.entries(ALL_HREFS_BY_GROUP)) {
+        if (hrefs.some(h => pathname === h || pathname.startsWith(h + '/'))) {
+          next[groupId] = true;
+        }
+      }
+      return next;
+    });
+  }, [pathname]);
 
   const logout = () => {
     fetch('/api/auth', { method: 'DELETE' }).catch(() => {});
@@ -73,7 +120,9 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + '/');
 
-  // While checking auth, show a minimal loading screen (not blank)
+  const toggleGroup = (id: string) =>
+    setOpenGroups(prev => ({ ...prev, [id]: !prev[id] }));
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
@@ -84,6 +133,13 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
       </div>
     );
   }
+
+  const linkCls = (active: boolean) =>
+    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+      active
+        ? 'bg-indigo-600 text-white shadow-sm'
+        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+    }`;
 
   const SidebarInner = () => (
     <div className="flex flex-col h-full">
@@ -101,16 +157,56 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
 
       {/* Nav */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {NAV.map(({ href, label, icon: Icon, exact }) => (
+        {TOP_NAV.map(({ href, label, icon: Icon, exact }) => (
           <Link key={href} href={href} onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive(href, exact)
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}>
+            className={linkCls(isActive(href, exact))}>
             <Icon size={16} />{label}
           </Link>
         ))}
+
+        {NAV_GROUPS.map(group => {
+          const GroupIcon = group.icon;
+          const isOpen = !!openGroups[group.id];
+          const groupActive = group.items.some(i => isActive(i.href));
+
+          return (
+            <div key={group.id} className="pt-1">
+              <button
+                onClick={() => toggleGroup(group.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  groupActive && !isOpen
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <GroupIcon size={16} />
+                <span className="flex-1 text-left">{group.label}</span>
+                <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isOpen && (
+                <div className="mt-0.5 ml-3 pl-3 border-l border-gray-100 dark:border-gray-800 space-y-0.5">
+                  {group.items.map(({ href, label, icon: Icon }) => (
+                    <Link key={href} href={href} onClick={() => setSidebarOpen(false)}
+                      className={linkCls(isActive(href))}>
+                      <Icon size={14} />
+                      <span className="text-[13px]">{label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        <div className="pt-1">
+          {BOTTOM_NAV.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} onClick={() => setSidebarOpen(false)}
+              className={linkCls(isActive(href))}>
+              <Icon size={16} />{label}
+            </Link>
+          ))}
+        </div>
       </nav>
 
       {/* User + Logout */}
@@ -130,7 +226,7 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 fixed h-full z-30">
+      <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 fixed h-full z-30">
         <SidebarInner />
       </aside>
 
@@ -138,14 +234,14 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <div className="relative w-60 bg-white dark:bg-gray-900 flex flex-col z-50">
+          <div className="relative w-64 bg-white dark:bg-gray-900 flex flex-col z-50">
             <SidebarInner />
           </div>
         </div>
       )}
 
       {/* Main */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 h-14 flex items-center justify-between">
           <button onClick={() => setSidebarOpen(true)}

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { FileText, Eye, CheckCircle, Clock, Plus, TrendingUp, MessageSquare, Users, FolderOpen, Settings, Calendar } from 'lucide-react';
+import { FileText, Eye, CheckCircle, Clock, Plus, TrendingUp, MessageSquare, Users, FolderOpen, Settings, Calendar, Tag, Smartphone } from 'lucide-react';
 import { formatRelative } from '@/lib/utils';
 import { safeJson } from '@/lib/fetch-json';
 import MonthlyViewsChart from '@/components/admin/MonthlyViewsChart';
@@ -9,6 +9,7 @@ import type { Article } from '@/types';
 import Cookies from 'js-cookie';
 
 interface MonthlyView { month: string; label: string; views: number; }
+interface TagCount { name: string; count: number; }
 
 interface DashboardData {
   total: number;
@@ -20,6 +21,7 @@ interface DashboardData {
   monthlyViews: MonthlyView[];
   unreadMessages: number;
   recent: Article[];
+  topTags: TagCount[];
 }
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
@@ -87,17 +89,43 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Monthly views chart */}
-      <div className="card p-5 mb-6">
-        <h2 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-1" style={{ fontFamily: 'var(--font-syne)' }}>
-          <TrendingUp size={16} className="text-indigo-500" />Monthly Views (last 12 months)
-        </h2>
-        <p className="text-xs text-gray-400 mb-4">Resets at the start of each month — past months remain unchanged.</p>
-        {loading ? (
-          <div className="h-56 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
-        ) : (
-          <MonthlyViewsChart data={data?.monthlyViews || []} />
-        )}
+      {/* Monthly views chart + compact Tags widget side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2 card p-5">
+          <h2 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-1 text-sm" style={{ fontFamily: 'var(--font-syne)' }}>
+            <TrendingUp size={15} className="text-indigo-500" />Monthly Views
+          </h2>
+          <p className="text-xs text-gray-400 mb-3">Resets each month — history is preserved.</p>
+          {loading ? (
+            <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+          ) : (
+            <MonthlyViewsChart data={data?.monthlyViews || []} />
+          )}
+        </div>
+
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 text-sm" style={{ fontFamily: 'var(--font-syne)' }}>
+              <Tag size={15} className="text-indigo-500" />Top Tags
+            </h2>
+            <Link href="/admin/tags" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View all →</Link>
+          </div>
+          {loading ? (
+            <div className="flex flex-wrap gap-2">{Array(6).fill(0).map((_, i) => <div key={i} className="h-7 w-16 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />)}</div>
+          ) : !data?.topTags || data.topTags.length === 0 ? (
+            <p className="text-xs text-gray-400">No tags yet — add some to your articles.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {data.topTags.map(t => (
+                <Link key={t.name} href="/admin/tags"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                  {t.name}
+                  <span className="text-gray-400 dark:text-gray-500">{t.count}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -139,7 +167,8 @@ export default function AdminDashboard() {
           <div className="space-y-1">
             {[
               { href: '/admin/articles/new', Icon: Plus,        label: 'New Article',        cls: 'text-indigo-600 dark:text-indigo-400' },
-              { href: '/admin/categories',   Icon: FolderOpen,  label: 'Categories',         cls: 'text-purple-600 dark:text-purple-400' },
+              { href: '/admin/categories',   Icon: FolderOpen,  label: 'Article Categories', cls: 'text-purple-600 dark:text-purple-400' },
+              { href: '/admin/phones',       Icon: Smartphone,  label: 'Devices',            cls: 'text-blue-600 dark:text-blue-400' },
               { href: '/admin/authors',      Icon: Users,       label: 'Authors',            cls: 'text-green-600 dark:text-green-400' },
               {
                 href: '/admin/messages',

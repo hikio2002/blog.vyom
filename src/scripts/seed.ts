@@ -19,12 +19,18 @@ const CategorySchema = new mongoose.Schema({ name: String, slug: { type: String,
 const AuthorSchema = new mongoose.Schema({ name: String, slug: { type: String, unique: true }, email: String, avatar: String, bio: String, socialLinks: Object, isActive: { type: Boolean, default: true } }, { timestamps: true });
 const SettingSchema = new mongoose.Schema({ key: { type: String, unique: true }, value: mongoose.Schema.Types.Mixed }, { timestamps: true });
 const PhoneCategorySchema = new mongoose.Schema({ name: String, slug: { type: String, unique: true }, description: String, icon: String, order: Number, isActive: { type: Boolean, default: true } }, { timestamps: true });
+const LaptopCategorySchema = new mongoose.Schema({ name: String, slug: { type: String, unique: true }, description: String, icon: String, order: Number, isActive: { type: Boolean, default: true } }, { timestamps: true });
+const TabletCategorySchema = new mongoose.Schema({ name: String, slug: { type: String, unique: true }, description: String, icon: String, order: Number, isActive: { type: Boolean, default: true } }, { timestamps: true });
+const CameraCategorySchema = new mongoose.Schema({ name: String, slug: { type: String, unique: true }, description: String, icon: String, order: Number, isActive: { type: Boolean, default: true } }, { timestamps: true });
 
 const User = mongoose.model('User', UserSchema);
 const Category = mongoose.model('Category', CategorySchema);
 const Author = mongoose.model('Author', AuthorSchema);
 const Setting = mongoose.model('Setting', SettingSchema);
 const PhoneCategory = mongoose.model('PhoneCategory', PhoneCategorySchema);
+const LaptopCategory = mongoose.model('LaptopCategory', LaptopCategorySchema);
+const TabletCategory = mongoose.model('TabletCategory', TabletCategorySchema);
+const CameraCategory = mongoose.model('CameraCategory', CameraCategorySchema);
 
 async function seed() {
   console.log('\n🌱  Vyom – running seed script...\n');
@@ -74,6 +80,45 @@ async function seed() {
     const exists = await PhoneCategory.findOne({ slug: cat.slug });
     if (!exists) { await PhoneCategory.create(cat); console.log(`✅  Phone category: ${cat.name}`); }
     else console.log(`⚠️   Phone category exists: ${cat.name}`);
+  }
+
+  // Default laptop categories
+  const laptopCats = [
+    { name: 'Budget',     slug: 'budget',     icon: 'Wallet',     order: 1, description: 'Reliable everyday laptops at an affordable price.' },
+    { name: 'Ultrabook',  slug: 'ultrabook',  icon: 'Laptop',     order: 2, description: 'Thin, light, and powerful enough for daily productivity.' },
+    { name: 'Gaming',     slug: 'gaming',     icon: 'Gamepad2',   order: 3, description: 'High-refresh displays and discrete GPUs for serious gaming.' },
+    { name: 'Creator',    slug: 'creator',    icon: 'Palette',    order: 4, description: 'Color-accurate displays and strong GPUs for creative work.' },
+    { name: 'Business',   slug: 'business',   icon: 'Briefcase',  order: 5, description: 'Durable, secure laptops built for professional use.' },
+  ];
+  for (const cat of laptopCats) {
+    const exists = await LaptopCategory.findOne({ slug: cat.slug });
+    if (!exists) { await LaptopCategory.create(cat); console.log(`✅  Laptop category: ${cat.name}`); }
+    else console.log(`⚠️   Laptop category exists: ${cat.name}`);
+  }
+
+  // Default drawing tablet categories
+  const tabletCats = [
+    { name: 'Entry-Level',   slug: 'entry-level',   icon: 'Wallet',  order: 1, description: 'Affordable tablets great for beginners and hobbyists.' },
+    { name: 'Professional',  slug: 'professional',  icon: 'PenTool', order: 2, description: 'High pressure sensitivity and precision for working artists.' },
+    { name: 'Display Tablets', slug: 'display',     icon: 'Palette', order: 3, description: 'Draw directly on a built-in screen for the most natural feel.' },
+  ];
+  for (const cat of tabletCats) {
+    const exists = await TabletCategory.findOne({ slug: cat.slug });
+    if (!exists) { await TabletCategory.create(cat); console.log(`✅  Tablet category: ${cat.name}`); }
+    else console.log(`⚠️   Tablet category exists: ${cat.name}`);
+  }
+
+  // Default camera categories
+  const cameraCats = [
+    { name: 'Mirrorless',     slug: 'mirrorless',     icon: 'Camera',  order: 1, description: 'Compact, versatile cameras with interchangeable lenses.' },
+    { name: 'DSLR',           slug: 'dslr',           icon: 'Aperture', order: 2, description: 'Classic optical-viewfinder cameras with a huge lens ecosystem.' },
+    { name: 'Point & Shoot',  slug: 'point-and-shoot', icon: 'Wallet',  order: 3, description: 'Compact and simple cameras for everyday photography.' },
+    { name: 'Action Cameras', slug: 'action',         icon: 'Video',   order: 4, description: 'Rugged, compact cameras built for movement and adventure.' },
+  ];
+  for (const cat of cameraCats) {
+    const exists = await CameraCategory.findOne({ slug: cat.slug });
+    if (!exists) { await CameraCategory.create(cat); console.log(`✅  Camera category: ${cat.name}`); }
+    else console.log(`⚠️   Camera category exists: ${cat.name}`);
   }
 
   // Default settings

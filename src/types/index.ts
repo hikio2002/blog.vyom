@@ -145,3 +145,78 @@ export interface Comment {
   createdAt: string;
   replies?: Comment[];
 }
+
+export interface LaptopCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  order: number;
+  isActive: boolean;
+}
+
+export interface LaptopSpecs {
+  display?: string;
+  processor?: string;
+  graphics?: string;
+  ram?: string;
+  storage?: string;
+  battery?: string;
+  ports?: string;
+  os?: string;
+  weight?: string;
+  dimensions?: string;
+  colors?: string;
+}
+
+export interface Laptop {
+  _id: string;
+  name: string;
+  slug: string;
+  brand: string;
+  category: LaptopCategory;
+  price: number;
+  currency: string;
+  images: string[];
+  description: string;
+  specs: LaptopSpecs;
+  pros: string[];
+  cons: string[];
+  rating?: number;
+  buyLink?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TabletCategory {
+  _id: string; name: string; slug: string; description?: string; icon?: string; order: number; isActive: boolean;
+}
+export interface TabletSpecs {
+  activeArea?: string; resolution?: string; pressureLevels?: string; penType?: string;
+  connectivity?: string; compatibility?: string; expressKeys?: string; battery?: string;
+  weight?: string; dimensions?: string;
+}
+export interface Tablet {
+  _id: string; name: string; slug: string; brand: string; category: TabletCategory;
+  price: number; currency: string; images: string[]; description: string; specs: TabletSpecs;
+  pros: string[]; cons: string[]; rating?: number; buyLink?: string; isActive: boolean;
+  isFeatured: boolean; createdAt: string; updatedAt: string;
+}
+
+export interface CameraCategory {
+  _id: string; name: string; slug: string; description?: string; icon?: string; order: number; isActive: boolean;
+}
+export interface CameraSpecs {
+  sensorType?: string; resolution?: string; lensMount?: string; iso?: string;
+  videoResolution?: string; autofocus?: string; stabilization?: string; battery?: string;
+  weight?: string; dimensions?: string;
+}
+export interface Camera {
+  _id: string; name: string; slug: string; brand: string; category: CameraCategory;
+  price: number; currency: string; images: string[]; description: string; specs: CameraSpecs;
+  pros: string[]; cons: string[]; rating?: number; buyLink?: string; isActive: boolean;
+  isFeatured: boolean; createdAt: string; updatedAt: string;
+}

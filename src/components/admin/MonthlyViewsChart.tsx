@@ -14,8 +14,8 @@ export default function MonthlyViewsChart({ data }: Props) {
 
   const max = Math.max(...data.map(d => d.views), 1);
   const width = 800;
-  const height = 220;
-  const padding = { top: 20, right: 10, bottom: 30, left: 10 };
+  const height = 140;
+  const padding = { top: 14, right: 10, bottom: 24, left: 10 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const barGap = 8;
@@ -77,7 +77,7 @@ export default function MonthlyViewsChart({ data }: Props) {
               {/* Month label */}
               <text
                 x={x + barWidth / 2}
-                y={height - 8}
+                y={height - 6}
                 textAnchor="middle"
                 className="fill-gray-400 text-[10px]"
               >
@@ -89,7 +89,7 @@ export default function MonthlyViewsChart({ data }: Props) {
                 <g>
                   <rect
                     x={x + barWidth / 2 - 24}
-                    y={y - 28}
+                    y={Math.max(y - 28, 2)}
                     width={48}
                     height={22}
                     rx={6}
@@ -97,7 +97,7 @@ export default function MonthlyViewsChart({ data }: Props) {
                   />
                   <text
                     x={x + barWidth / 2}
-                    y={y - 13}
+                    y={Math.max(y - 28, 2) + 15}
                     textAnchor="middle"
                     className="fill-white dark:fill-gray-900 text-[11px] font-semibold"
                   >

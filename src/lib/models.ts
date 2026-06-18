@@ -349,6 +349,275 @@ const CommentSchema = new Schema<IComment>(
 CommentSchema.index({ article: 1, status: 1, createdAt: 1 });
 CommentSchema.index({ parent: 1 });
 
+// ─── Laptop Category ────────────────────────────────────────────────────────
+export interface ILaptopCategory extends Document {
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  order: number;
+  isActive: boolean;
+}
+
+const LaptopCategorySchema = new Schema<ILaptopCategory>(
+  {
+    name:        { type: String, required: true, trim: true },
+    slug:        { type: String, required: true, unique: true, lowercase: true, trim: true },
+    description: String,
+    icon:        String,
+    order:       { type: Number, default: 0 },
+    isActive:    { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+// ─── Laptop ─────────────────────────────────────────────────────────────────
+export interface ILaptopSpecs {
+  display?: string;
+  processor?: string;
+  graphics?: string;
+  ram?: string;
+  storage?: string;
+  battery?: string;
+  ports?: string;
+  os?: string;
+  weight?: string;
+  dimensions?: string;
+  colors?: string;
+}
+
+export interface ILaptop extends Document {
+  name: string;
+  slug: string;
+  brand: string;
+  category: Types.ObjectId;
+  price: number;
+  currency: string;
+  images: string[];
+  description: string;
+  specs: ILaptopSpecs;
+  pros: string[];
+  cons: string[];
+  rating?: number;
+  buyLink?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+}
+
+const LaptopSchema = new Schema<ILaptop>(
+  {
+    name:     { type: String, required: true, trim: true },
+    slug:     { type: String, required: true, unique: true, lowercase: true, trim: true },
+    brand:    { type: String, required: true, trim: true },
+    category: { type: Schema.Types.ObjectId, ref: 'LaptopCategory', required: true },
+    price:    { type: Number, required: true, default: 0 },
+    currency: { type: String, default: '₹' },
+    images:   { type: [String], default: [] },
+    description: { type: String, default: '' },
+    specs: {
+      display:    String,
+      processor:  String,
+      graphics:   String,
+      ram:        String,
+      storage:    String,
+      battery:    String,
+      ports:      String,
+      os:         String,
+      weight:     String,
+      dimensions: String,
+      colors:     String,
+    },
+    pros: { type: [String], default: [] },
+    cons: { type: [String], default: [] },
+    rating:     { type: Number, min: 0, max: 5 },
+    buyLink:    String,
+    isActive:   { type: Boolean, default: true },
+    isFeatured: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+LaptopSchema.index({ category: 1, isActive: 1 });
+LaptopSchema.index({ slug: 1 });
+
+// ─── Drawing Tablet Category ────────────────────────────────────────────────
+export interface ITabletCategory extends Document {
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  order: number;
+  isActive: boolean;
+}
+
+const TabletCategorySchema = new Schema<ITabletCategory>(
+  {
+    name:        { type: String, required: true, trim: true },
+    slug:        { type: String, required: true, unique: true, lowercase: true, trim: true },
+    description: String,
+    icon:        String,
+    order:       { type: Number, default: 0 },
+    isActive:    { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+// ─── Drawing Tablet ─────────────────────────────────────────────────────────
+export interface ITabletSpecs {
+  activeArea?: string;
+  resolution?: string;
+  pressureLevels?: string;
+  penType?: string;
+  connectivity?: string;
+  compatibility?: string;
+  expressKeys?: string;
+  battery?: string;
+  weight?: string;
+  dimensions?: string;
+}
+
+export interface ITablet extends Document {
+  name: string;
+  slug: string;
+  brand: string;
+  category: Types.ObjectId;
+  price: number;
+  currency: string;
+  images: string[];
+  description: string;
+  specs: ITabletSpecs;
+  pros: string[];
+  cons: string[];
+  rating?: number;
+  buyLink?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+}
+
+const TabletSchema = new Schema<ITablet>(
+  {
+    name:     { type: String, required: true, trim: true },
+    slug:     { type: String, required: true, unique: true, lowercase: true, trim: true },
+    brand:    { type: String, required: true, trim: true },
+    category: { type: Schema.Types.ObjectId, ref: 'TabletCategory', required: true },
+    price:    { type: Number, required: true, default: 0 },
+    currency: { type: String, default: '₹' },
+    images:   { type: [String], default: [] },
+    description: { type: String, default: '' },
+    specs: {
+      activeArea:     String,
+      resolution:     String,
+      pressureLevels: String,
+      penType:        String,
+      connectivity:   String,
+      compatibility:  String,
+      expressKeys:    String,
+      battery:        String,
+      weight:         String,
+      dimensions:     String,
+    },
+    pros: { type: [String], default: [] },
+    cons: { type: [String], default: [] },
+    rating:     { type: Number, min: 0, max: 5 },
+    buyLink:    String,
+    isActive:   { type: Boolean, default: true },
+    isFeatured: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+TabletSchema.index({ category: 1, isActive: 1 });
+TabletSchema.index({ slug: 1 });
+
+// ─── Camera Category ────────────────────────────────────────────────────────
+export interface ICameraCategory extends Document {
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  order: number;
+  isActive: boolean;
+}
+
+const CameraCategorySchema = new Schema<ICameraCategory>(
+  {
+    name:        { type: String, required: true, trim: true },
+    slug:        { type: String, required: true, unique: true, lowercase: true, trim: true },
+    description: String,
+    icon:        String,
+    order:       { type: Number, default: 0 },
+    isActive:    { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+// ─── Camera ─────────────────────────────────────────────────────────────────
+export interface ICameraSpecs {
+  sensorType?: string;
+  resolution?: string;
+  lensMount?: string;
+  iso?: string;
+  videoResolution?: string;
+  autofocus?: string;
+  stabilization?: string;
+  battery?: string;
+  weight?: string;
+  dimensions?: string;
+}
+
+export interface ICamera extends Document {
+  name: string;
+  slug: string;
+  brand: string;
+  category: Types.ObjectId;
+  price: number;
+  currency: string;
+  images: string[];
+  description: string;
+  specs: ICameraSpecs;
+  pros: string[];
+  cons: string[];
+  rating?: number;
+  buyLink?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+}
+
+const CameraSchema = new Schema<ICamera>(
+  {
+    name:     { type: String, required: true, trim: true },
+    slug:     { type: String, required: true, unique: true, lowercase: true, trim: true },
+    brand:    { type: String, required: true, trim: true },
+    category: { type: Schema.Types.ObjectId, ref: 'CameraCategory', required: true },
+    price:    { type: Number, required: true, default: 0 },
+    currency: { type: String, default: '₹' },
+    images:   { type: [String], default: [] },
+    description: { type: String, default: '' },
+    specs: {
+      sensorType:      String,
+      resolution:      String,
+      lensMount:       String,
+      iso:             String,
+      videoResolution: String,
+      autofocus:       String,
+      stabilization:   String,
+      battery:         String,
+      weight:          String,
+      dimensions:      String,
+    },
+    pros: { type: [String], default: [] },
+    cons: { type: [String], default: [] },
+    rating:     { type: Number, min: 0, max: 5 },
+    buyLink:    String,
+    isActive:   { type: Boolean, default: true },
+    isFeatured: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+CameraSchema.index({ category: 1, isActive: 1 });
+CameraSchema.index({ slug: 1 });
+
 // ─── Export models (safe for Next.js hot-reload) ──────────────────────────────
 export const User = (mongoose.models.User as mongoose.Model<IUser>) ||
   mongoose.model<IUser>('User', UserSchema);
@@ -372,6 +641,18 @@ export const PhoneCategory = (mongoose.models.PhoneCategory as mongoose.Model<IP
   mongoose.model<IPhoneCategory>('PhoneCategory', PhoneCategorySchema);
 export const Phone = (mongoose.models.Phone as mongoose.Model<IPhone>) ||
   mongoose.model<IPhone>('Phone', PhoneSchema);
+export const LaptopCategory = (mongoose.models.LaptopCategory as mongoose.Model<ILaptopCategory>) ||
+  mongoose.model<ILaptopCategory>('LaptopCategory', LaptopCategorySchema);
+export const Laptop = (mongoose.models.Laptop as mongoose.Model<ILaptop>) ||
+  mongoose.model<ILaptop>('Laptop', LaptopSchema);
+export const TabletCategory = (mongoose.models.TabletCategory as mongoose.Model<ITabletCategory>) ||
+  mongoose.model<ITabletCategory>('TabletCategory', TabletCategorySchema);
+export const Tablet = (mongoose.models.Tablet as mongoose.Model<ITablet>) ||
+  mongoose.model<ITablet>('Tablet', TabletSchema);
+export const CameraCategory = (mongoose.models.CameraCategory as mongoose.Model<ICameraCategory>) ||
+  mongoose.model<ICameraCategory>('CameraCategory', CameraCategorySchema);
+export const Camera = (mongoose.models.Camera as mongoose.Model<ICamera>) ||
+  mongoose.model<ICamera>('Camera', CameraSchema);
 export const MonthlyStats = (mongoose.models.MonthlyStats as mongoose.Model<IMonthlyStats>) ||
   mongoose.model<IMonthlyStats>('MonthlyStats', MonthlyStatsSchema);
 export const Comment = (mongoose.models.Comment as mongoose.Model<IComment>) ||

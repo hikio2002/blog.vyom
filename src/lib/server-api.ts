@@ -6,7 +6,7 @@
 import { cache } from 'react';
 import mongoose from 'mongoose';
 import { dbConnect } from './db';
-import { Article, Category, Author, MonthlyStats, Setting, Ad, PhoneCategory, Phone, Comment } from './models';
+import { Article, Category, Author, MonthlyStats, Setting, Ad, PhoneCategory, Phone, Comment, LaptopCategory, Laptop, TabletCategory, Tablet, CameraCategory, Camera } from './models';
 
 export async function getPublishedArticles(opts: {
   page?: number; limit?: number; categoryId?: string; search?: string; sort?: string;
@@ -376,7 +376,10 @@ export async function getRelatedPhones(phoneId: string, categoryId: string, limi
 export async function getAllPhoneSlugs() {
   try {
     await dbConnect();
-    const phones = await Phone.find({ isActive: true }).select('slug').lean();
+    // Capped + most-recent-first, same pattern as getAllArticleSlugs — keeps
+    // build time bounded as the catalog grows; older items still work via
+    // on-demand ISR (dynamicParams defaults to true).
+    const phones = await Phone.find({ isActive: true }).sort({ createdAt: -1 }).limit(200).select('slug').lean();
     return (phones as any[]).map(p => ({ slug: p.slug }));
   } catch (e) {
     console.error('getAllPhoneSlugs error:', e);
@@ -393,4 +396,231 @@ export async function getAllPhoneCategorySlugs() {
     console.error('getAllPhoneCategorySlugs error:', e);
     return [];
   }
+}
+
+// ─── Laptops ────────────────────────────────────────────────────────────────
+
+export async function getActiveLaptopCategories() {
+  try {
+    await dbConnect();
+    return await LaptopCategory.find({ isActive: true }).sort({ order: 1, name: 1 }).lean();
+  } catch (e) {
+    console.error('getActiveLaptopCategories error:', e);
+    return [];
+  }
+}
+
+export async function getLaptopCategoryBySlug(slug: string) {
+  try {
+    await dbConnect();
+    return await LaptopCategory.findOne({ slug, isActive: true }).lean();
+  } catch (e) {
+    console.error('getLaptopCategoryBySlug error:', e);
+    return null;
+  }
+}
+
+export async function getFeaturedLaptops(limit = 6) {
+  try {
+    await dbConnect();
+    return await Laptop.find({ isActive: true, isFeatured: true })
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+  } catch (e) {
+    console.error('getFeaturedLaptops error:', e);
+    return [];
+  }
+}
+
+export async function getLaptopsByCategory(categoryId: string, opts: { page?: number; limit?: number } = {}) {
+  const { page = 1, limit = 12 } = opts;
+  try {
+    await dbConnect();
+    const filter = { category: categoryId, isActive: true };
+    const skip = (page - 1) * limit;
+    const [laptops, total] = await Promise.all([
+      Laptop.find(filter).populate('category', 'name slug').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Laptop.countDocuments(filter),
+    ]);
+    return { laptops, total, page, totalPages: Math.ceil(total / limit) };
+  } catch (e) {
+    console.error('getLaptopsByCategory error:', e);
+    return { laptops: [], total: 0, page: 1, totalPages: 1 };
+  }
+}
+
+export const getLaptopBySlug = cache(async (slug: string) => {
+  try {
+    await dbConnect();
+    return await Laptop.findOne({ slug, isActive: true }).populate('category', 'name slug description').lean();
+  } catch (e) {
+    console.error('getLaptopBySlug error:', e);
+    return null;
+  }
+});
+
+export async function getRelatedLaptops(laptopId: string, categoryId: string, limit = 4) {
+  try {
+    await dbConnect();
+    return await Laptop.find({ _id: { $ne: laptopId }, category: categoryId, isActive: true })
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+  } catch (e) {
+    console.error('getRelatedLaptops error:', e);
+    return [];
+  }
+}
+
+export async function getAllLaptopSlugs() {
+  try {
+    await dbConnect();
+    const laptops = await Laptop.find({ isActive: true }).sort({ createdAt: -1 }).limit(200).select('slug').lean();
+    return (laptops as any[]).map(l => ({ slug: l.slug }));
+  } catch (e) {
+    console.error('getAllLaptopSlugs error:', e);
+    return [];
+  }
+}
+
+export async function getAllLaptopCategorySlugs() {
+  try {
+    await dbConnect();
+    const cats = await LaptopCategory.find({ isActive: true }).select('slug').lean();
+    return (cats as any[]).map(c => ({ slug: c.slug }));
+  } catch (e) {
+    console.error('getAllLaptopCategorySlugs error:', e);
+    return [];
+  }
+}
+
+// ─── Drawing Tablets ────────────────────────────────────────────────────────
+
+export async function getActiveTabletCategories() {
+  try { await dbConnect(); return await TabletCategory.find({ isActive: true }).sort({ order: 1, name: 1 }).lean(); }
+  catch (e) { console.error('getActiveTabletCategories error:', e); return []; }
+}
+
+export async function getTabletCategoryBySlug(slug: string) {
+  try { await dbConnect(); return await TabletCategory.findOne({ slug, isActive: true }).lean(); }
+  catch (e) { console.error('getTabletCategoryBySlug error:', e); return null; }
+}
+
+export async function getFeaturedTablets(limit = 6) {
+  try {
+    await dbConnect();
+    return await Tablet.find({ isActive: true, isFeatured: true }).populate('category', 'name slug').sort({ createdAt: -1 }).limit(limit).lean();
+  } catch (e) { console.error('getFeaturedTablets error:', e); return []; }
+}
+
+export async function getTabletsByCategory(categoryId: string, opts: { page?: number; limit?: number } = {}) {
+  const { page = 1, limit = 12 } = opts;
+  try {
+    await dbConnect();
+    const filter = { category: categoryId, isActive: true };
+    const skip = (page - 1) * limit;
+    const [tablets, total] = await Promise.all([
+      Tablet.find(filter).populate('category', 'name slug').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Tablet.countDocuments(filter),
+    ]);
+    return { tablets, total, page, totalPages: Math.ceil(total / limit) };
+  } catch (e) { console.error('getTabletsByCategory error:', e); return { tablets: [], total: 0, page: 1, totalPages: 1 }; }
+}
+
+export const getTabletBySlug = cache(async (slug: string) => {
+  try {
+    await dbConnect();
+    return await Tablet.findOne({ slug, isActive: true }).populate('category', 'name slug description').lean();
+  } catch (e) { console.error('getTabletBySlug error:', e); return null; }
+});
+
+export async function getRelatedTablets(tabletId: string, categoryId: string, limit = 4) {
+  try {
+    await dbConnect();
+    return await Tablet.find({ _id: { $ne: tabletId }, category: categoryId, isActive: true })
+      .populate('category', 'name slug').sort({ createdAt: -1 }).limit(limit).lean();
+  } catch (e) { console.error('getRelatedTablets error:', e); return []; }
+}
+
+export async function getAllTabletSlugs() {
+  try {
+    await dbConnect();
+    const tablets = await Tablet.find({ isActive: true }).sort({ createdAt: -1 }).limit(200).select('slug').lean();
+    return (tablets as any[]).map(t => ({ slug: t.slug }));
+  } catch (e) { console.error('getAllTabletSlugs error:', e); return []; }
+}
+
+export async function getAllTabletCategorySlugs() {
+  try {
+    await dbConnect();
+    const cats = await TabletCategory.find({ isActive: true }).select('slug').lean();
+    return (cats as any[]).map(c => ({ slug: c.slug }));
+  } catch (e) { console.error('getAllTabletCategorySlugs error:', e); return []; }
+}
+
+// ─── Cameras ────────────────────────────────────────────────────────────────
+
+export async function getActiveCameraCategories() {
+  try { await dbConnect(); return await CameraCategory.find({ isActive: true }).sort({ order: 1, name: 1 }).lean(); }
+  catch (e) { console.error('getActiveCameraCategories error:', e); return []; }
+}
+
+export async function getCameraCategoryBySlug(slug: string) {
+  try { await dbConnect(); return await CameraCategory.findOne({ slug, isActive: true }).lean(); }
+  catch (e) { console.error('getCameraCategoryBySlug error:', e); return null; }
+}
+
+export async function getFeaturedCameras(limit = 6) {
+  try {
+    await dbConnect();
+    return await Camera.find({ isActive: true, isFeatured: true }).populate('category', 'name slug').sort({ createdAt: -1 }).limit(limit).lean();
+  } catch (e) { console.error('getFeaturedCameras error:', e); return []; }
+}
+
+export async function getCamerasByCategory(categoryId: string, opts: { page?: number; limit?: number } = {}) {
+  const { page = 1, limit = 12 } = opts;
+  try {
+    await dbConnect();
+    const filter = { category: categoryId, isActive: true };
+    const skip = (page - 1) * limit;
+    const [cameras, total] = await Promise.all([
+      Camera.find(filter).populate('category', 'name slug').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Camera.countDocuments(filter),
+    ]);
+    return { cameras, total, page, totalPages: Math.ceil(total / limit) };
+  } catch (e) { console.error('getCamerasByCategory error:', e); return { cameras: [], total: 0, page: 1, totalPages: 1 }; }
+}
+
+export const getCameraBySlug = cache(async (slug: string) => {
+  try {
+    await dbConnect();
+    return await Camera.findOne({ slug, isActive: true }).populate('category', 'name slug description').lean();
+  } catch (e) { console.error('getCameraBySlug error:', e); return null; }
+});
+
+export async function getRelatedCameras(cameraId: string, categoryId: string, limit = 4) {
+  try {
+    await dbConnect();
+    return await Camera.find({ _id: { $ne: cameraId }, category: categoryId, isActive: true })
+      .populate('category', 'name slug').sort({ createdAt: -1 }).limit(limit).lean();
+  } catch (e) { console.error('getRelatedCameras error:', e); return []; }
+}
+
+export async function getAllCameraSlugs() {
+  try {
+    await dbConnect();
+    const cameras = await Camera.find({ isActive: true }).sort({ createdAt: -1 }).limit(200).select('slug').lean();
+    return (cameras as any[]).map(c => ({ slug: c.slug }));
+  } catch (e) { console.error('getAllCameraSlugs error:', e); return []; }
+}
+
+export async function getAllCameraCategorySlugs() {
+  try {
+    await dbConnect();
+    const cats = await CameraCategory.find({ isActive: true }).select('slug').lean();
+    return (cats as any[]).map(c => ({ slug: c.slug }));
+  } catch (e) { console.error('getAllCameraCategorySlugs error:', e); return []; }
 }

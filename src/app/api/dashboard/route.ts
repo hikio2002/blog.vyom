@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     await dbConnect();
 
-    const [statusCounts, viewsAgg, recent, unreadMessages, monthlyDocs] = await Promise.all([
+    const [statusCounts, viewsAgg, recent, unreadMessages, monthlyDocs, topTags] = await Promise.all([
       // Count articles grouped by status
       Article.aggregate([
         { $group: { _id: '$status', count: { $sum: 1 } } },
@@ -34,6 +34,14 @@ export async function GET(req: NextRequest) {
       Contact.countDocuments({ status: 'unread' }),
       // All monthly stats docs — we'll fill in missing months below
       MonthlyStats.find().lean(),
+      // Top 8 most-used tags, for a compact dashboard widget
+      Article.aggregate([
+        { $unwind: '$tags' },
+        { $group: { _id: '$tags', count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+        { $limit: 8 },
+        { $project: { _id: 0, name: '$_id', count: 1 } },
+      ]),
     ]);
 
     const counts: Record<string, number> = { draft: 0, published: 0, scheduled: 0 };
@@ -76,6 +84,7 @@ export async function GET(req: NextRequest) {
       monthlyViews,
       unreadMessages,
       recent,
+      topTags,
     });
   } catch (e: any) {
     console.error('GET /api/dashboard error:', e);
