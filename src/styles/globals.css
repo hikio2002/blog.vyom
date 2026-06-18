@@ -2,10 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-syne: 'Syne', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+/*
+  --font-inter and --font-syne are defined by next/font in src/app/layout.tsx
+  via the `variable` option, applied as a className on <html>. That's the
+  same cascade scope as :root, so no fallback values are declared here —
+  doing so risked source-order conflicts with the actual self-hosted font.
+*/
 
 @layer base {
   html { scroll-behavior: smooth; }

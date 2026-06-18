@@ -12,7 +12,7 @@ export default function CameraGallery({ images, name }: Props) {
   if (valid.length === 0) {
     return (
       <div className="aspect-square rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-300">
-        <Camera size={64} />
+        <CameraIcon size={64} />
       </div>
     );
   }

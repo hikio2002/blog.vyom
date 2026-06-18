@@ -1,10 +1,30 @@
 import type { Metadata } from 'next';
+import { Inter, Syne } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'react-hot-toast';
 import { getSiteSettings } from '@/lib/server-api';
 import '@/styles/globals.css';
 
 export const revalidate = 60;
+
+// next/font self-hosts these at build time — no external Google Fonts
+// request, no render-blocking <link>, and font-display:swap is applied
+// automatically. Variable names match the --font-inter / --font-syne
+// custom properties already used throughout globals.css and components,
+// so no other file needs to change.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const syne = Syne({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-syne',
+  display: 'swap',
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
@@ -37,32 +57,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const adsenseId = settings.adsensePublisherId || process.env.NEXT_PUBLIC_ADSENSE_ID;
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${syne.variable}`}>
       <head>
-        {/*
-          Performance: preconnect to Google Fonts origins so the DNS lookup
-          and TCP/TLS handshake happen in parallel with HTML parsing.
-          Then use display=swap so text renders immediately in a fallback font
-          while the custom fonts load — prevents invisible text (FOIT).
-        */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Non-blocking font load: media="print" trick loads async, then switches to all */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
-          rel="stylesheet"
-          media="print"
-          // @ts-ignore — onload is valid for link elements
-          onLoad="this.media='all'"
-        />
-        {/* Fallback for no-JS */}
-        <noscript>
-          <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
-            rel="stylesheet"
-          />
-        </noscript>
-
         {/* AdSense — async so it never blocks rendering */}
         {adsenseId && (
           <script
