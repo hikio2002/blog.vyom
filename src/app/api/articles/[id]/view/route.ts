@@ -35,17 +35,19 @@ function isBot(ua: string): boolean {
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const ua = req.headers.get('user-agent') || '';
+    await dbConnect();
 
     if (isBot(ua)) {
-      return NextResponse.json({ counted: false, reason: 'bot' });
+      // Still return the current count so the UI can display something
+      // sensible even when the visitor itself isn't counted as a view.
+      const article = await Article.findById(params.id).select('viewCount').lean();
+      return NextResponse.json({ counted: false, reason: 'bot', viewCount: (article as any)?.viewCount ?? 0 });
     }
-
-    await dbConnect();
 
     const month = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
 
-    await Promise.all([
-      Article.findByIdAndUpdate(params.id, { $inc: { viewCount: 1 } }),
+    const [updatedArticle] = await Promise.all([
+      Article.findByIdAndUpdate(params.id, { $inc: { viewCount: 1 } }, { new: true }).select('viewCount'),
       MonthlyStats.findOneAndUpdate(
         { month },
         { $inc: { views: 1 } },
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       ),
     ]);
 
-    return NextResponse.json({ counted: true });
+    return NextResponse.json({ counted: true, viewCount: updatedArticle?.viewCount ?? 0 });
   } catch (e: any) {
     // Non-critical — don't surface errors to the client
     console.error('POST /api/articles/[id]/view error:', e);

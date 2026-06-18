@@ -108,7 +108,7 @@ export default async function BlogPostPage({ params }: Props) {
                 )}
                 {article.publishedAt && <span>{formatDateLong(article.publishedAt)}</span>}
                 <span>📖 {readingTimeLabel(article.readingTime)}</span>
-                <span>👁 {article.viewCount?.toLocaleString()} views</span>
+                <ViewTracker articleId={String(article._id)} initialCount={article.viewCount || 0} />
               </div>
             </header>
 
@@ -184,7 +184,6 @@ export default async function BlogPostPage({ params }: Props) {
           </aside>
         </div>
       </div>
-      <ViewTracker articleId={String(article._id)} />
     </PublicLayout>
   );
 }
