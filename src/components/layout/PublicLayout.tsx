@@ -13,7 +13,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <AdBanner placement="header" className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4" />
       </Suspense>
 
-      <main className="flex-1">{children}</main>
+      {/* id="main-content" is the skip-link target from Header */}
+      <main id="main-content" className="flex-1" tabIndex={-1}>
+        {children}
+      </main>
 
       {/* Footer banner ad — streamed independently, hidden if no active ad */}
       <Suspense fallback={null}>

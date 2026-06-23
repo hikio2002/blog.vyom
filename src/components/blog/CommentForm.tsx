@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import toast from 'react-hot-toast';
 import { Send } from 'lucide-react';
 import { safeJson } from '@/lib/fetch-json';
@@ -17,6 +17,9 @@ export default function CommentForm({ articleId, parentId, onSubmitted, onCancel
   const [email, setEmail] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // useId generates stable IDs for label/input association — critical for
+  // screen readers and the accessibility tree to be well-formed.
+  const uid = useId();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,12 +39,7 @@ export default function CommentForm({ articleId, parentId, onSubmitted, onCancel
 
       toast.success(parentId ? 'Reply posted!' : 'Comment posted!');
       setContent('');
-      if (!parentId) {
-        // Keep name/email for top-level form so repeat commenters don't retype
-      } else {
-        setName('');
-        setEmail('');
-      }
+      if (parentId) { setName(''); setEmail(''); }
       onSubmitted();
     } catch (e: any) {
       toast.error(e.message || 'Failed to post comment');
@@ -51,39 +49,57 @@ export default function CommentForm({ articleId, parentId, onSubmitted, onCancel
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-3" noValidate>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="Your name"
+        <div>
+          <label htmlFor={`${uid}-name`} className="sr-only">Your name</label>
+          <input
+            id={`${uid}-name`}
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Your name"
+            aria-label="Your name"
+            required
+            maxLength={80}
+            className="input text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor={`${uid}-email`} className="sr-only">Your email address</label>
+          <input
+            id={`${uid}-email`}
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="Your email"
+            aria-label="Your email address"
+            required
+            maxLength={120}
+            className="input text-sm"
+          />
+        </div>
+      </div>
+      <div>
+        <label htmlFor={`${uid}-content`} className="sr-only">
+          {parentId ? 'Your reply' : 'Your comment'}
+        </label>
+        <textarea
+          id={`${uid}-content`}
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          placeholder={parentId ? 'Write your reply…' : 'Write a comment…'}
+          aria-label={parentId ? 'Your reply' : 'Your comment'}
           required
-          maxLength={80}
-          className="input text-sm"
-        />
-        <input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Your email"
-          required
-          maxLength={120}
-          className="input text-sm"
+          maxLength={2000}
+          rows={parentId ? 3 : 4}
+          autoFocus={autoFocus}
+          className="input resize-none text-sm"
         />
       </div>
-      <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        placeholder={parentId ? 'Write your reply…' : 'Write a comment…'}
-        required
-        maxLength={2000}
-        rows={parentId ? 3 : 4}
-        autoFocus={autoFocus}
-        className="input resize-none text-sm"
-      />
       <div className="flex items-center gap-2">
         <button type="submit" disabled={submitting} className="btn-primary gap-1.5 text-sm py-2">
-          <Send size={13} />{submitting ? 'Posting…' : parentId ? 'Post Reply' : 'Post Comment'}
+          <Send size={13} aria-hidden="true" />
+          {submitting ? 'Posting…' : parentId ? 'Post Reply' : 'Post Comment'}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} className="btn-secondary text-sm py-2">

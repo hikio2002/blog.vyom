@@ -44,7 +44,7 @@ export default async function HomePage() {
         </Suspense>
 
         {featured.length > 0 && (
-          <section className="mb-12">
+          <section className="mb-12" aria-label="Featured articles">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {featured[0] && <div className="lg:col-span-2"><ArticleCard article={featured[0] as Article} variant="featured" className="aspect-[16/10] sm:aspect-video" /></div>}
               <div className="flex flex-col gap-4 lg:h-full">
@@ -72,7 +72,7 @@ export default async function HomePage() {
             />
           </div>
 
-          <aside className="space-y-6">
+          <aside className="space-y-6" aria-label="Sidebar">
             {trending.length > 0 && (
               <div className="card p-5">
                 <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4 text-base" style={{ fontFamily: 'var(--font-syne)' }}>

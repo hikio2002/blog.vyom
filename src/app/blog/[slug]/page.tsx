@@ -79,7 +79,7 @@ export default async function BlogPostPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12">
-          <article className="lg:col-span-3">
+          <article className="lg:col-span-3" aria-label={article.title}>
             <Breadcrumb items={[
               { label: 'Home', href: '/' },
               ...(article.category ? [{ label: article.category.name, href: `/category/${article.category.slug}` }] : []),
@@ -101,7 +101,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <Link href={`/author/${article.author.slug}`} className="flex items-center gap-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                     {article.author.avatar
                       ? <Image src={article.author.avatar} alt={article.author.name} width={32} height={32} className="rounded-full" />
-                      : <span className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 font-bold">{article.author.name[0]}</span>
+                      : <span className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 font-bold" aria-label={`${article.author.name} avatar`} role="img">{article.author.name[0]}</span>
                     }
                     <span className="font-medium">{article.author.name}</span>
                   </Link>
@@ -163,13 +163,14 @@ export default async function BlogPostPage({ params }: Props) {
             <CommentSection articleId={String(article._id)} />
           </article>
 
-          <aside className="hidden lg:block">
+          <aside className="hidden lg:block" aria-label="Article sidebar">
             <div className="sticky top-24 space-y-4">
               <div className="card p-5">
                 <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3" style={{ fontFamily: 'var(--font-syne)' }}>Share</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {['twitter','facebook','linkedin','whatsapp'].map(p => (
                     <a key={p} href={shareUrl(p, url, article.title)} target="_blank" rel="noopener noreferrer"
+                      aria-label={`Share on ${p}`}
                       className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-center capitalize transition-colors">
                       {p}
                     </a>

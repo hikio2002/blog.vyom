@@ -256,22 +256,63 @@
 .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
 
 
-/* ── Performance ── */
-/* Defer rendering of offscreen content — browser skips layout/paint
-   for sections below the fold until the user scrolls near them.
-   This is one of the highest-impact CSS optimizations for mobile. */
+/* ── Performance & Core Web Vitals ─────────────────────────────────── */
+
+/* CLS prevention: reserve space for images before they load.
+   Without explicit dimensions, the browser can't know the image height
+   until the file starts downloading, causing a layout shift (bad CLS). */
+img { max-width: 100%; height: auto; }
+
+/* CLS: prevent invisible text during font load (FOIT).
+   next/font already sets font-display:swap for the Inter/Syne fonts, but
+   this ensures any fallback CSS fonts don't cause layout jank either. */
+html { font-display: swap; }
+
+/* INP (Interaction to Next Paint) — minimum touch target size per WCAG.
+   Buttons/links smaller than 44×44px on mobile cause slow perceived
+   response because the browser must delay to resolve tap ambiguity. */
+@media (pointer: coarse) {
+  button, a, [role="button"], [role="menuitem"], [role="link"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  /* Exception: inline text links in article bodies shouldn't become 44px tall */
+  .article-body a, .text-link {
+    min-height: unset;
+    min-width: unset;
+  }
+}
+
+/* LCP: content-visibility defers paint of offscreen sections.
+   The footer and below-fold sections are skipped entirely until
+   the user scrolls near them, cutting initial render work. */
 footer {
   content-visibility: auto;
   contain-intrinsic-size: 0 400px;
 }
 
-/* Prevent layout shift from images loading */
-img { max-width: 100%; height: auto; }
+/* Avoid animating properties that trigger layout (width/height/top/left).
+   Animate transform/opacity only — these run on the GPU compositor thread
+   and don't block the main thread, improving INP on mobile. */
+.transition-all {
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
 
-/* Reduce motion for users who prefer it — improves perceived performance */
+/* Reduce motion — respects user preference, also helps Lighthouse score */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
+
+/* Prevent horizontal overflow on mobile — a common cause of CLS */
+body { overflow-x: hidden; }
+
+/* CLS: explicit aspect-ratio on image containers prevents shift on load */
+.aspect-video { aspect-ratio: 16 / 9; }
+.aspect-square { aspect-ratio: 1 / 1; }
