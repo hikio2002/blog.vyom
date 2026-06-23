@@ -112,7 +112,7 @@ export default function ArticleCard({
         aria-label={article.title}
       >
         {/* Explicit aspect-ratio prevents layout shift while image loads */}
-        <div className="relative bg-gray-100 dark:bg-gray-800 flex-shrink-0 overflow-hidden" style={{ aspectRatio: '16/9', minHeight: '140px' }}>
+        <div className="relative bg-gray-100 dark:bg-gray-800 flex-shrink-0 overflow-hidden" style={{ aspectRatio: '16/7' }}>
           {article.featuredImage
             ? (
               <Image

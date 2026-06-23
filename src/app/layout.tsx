@@ -3,6 +3,7 @@ import { Inter, Syne } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'react-hot-toast';
 import { getSiteSettings } from '@/lib/server-api';
+import AdBlockDetector from '@/components/common/AdBlockDetector';
 import '@/styles/globals.css';
 
 export const revalidate = 60;
@@ -89,6 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           disableTransitionOnChange
         >
           {children}
+          <AdBlockDetector />
           <Toaster
             position="top-right"
             toastOptions={{ className: '!text-sm', duration: 4000 }}
