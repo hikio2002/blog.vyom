@@ -86,12 +86,16 @@ export default async function HomePage() {
                 </h3>
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {trending.map((a: any, i: number) => (
-                    <Link key={a._id} href={`/blog/${a.slug}`} className="flex gap-3 py-3 group first:pt-0 last:pb-0">
-                      <span className="text-2xl font-black text-gray-200 dark:text-gray-700 w-8 flex-shrink-0 leading-none pt-0.5" style={{ fontFamily: 'var(--font-syne)' }}>
+                    <Link key={a._id} href={`/blog/${a.slug}`} className="flex items-start gap-3 py-3 group first:pt-0 last:pb-0">
+                      <span className="text-2xl font-black text-gray-200 dark:text-gray-700 w-8 flex-shrink-0 leading-none pt-0.5 tabular-nums" style={{ fontFamily: 'var(--font-syne)' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
-                      <div>
-                        {a.category && <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold uppercase">{a.category.name}</span>}
+                      <div className="flex-1 min-w-0">
+                        {a.category && (
+                          <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wide">
+                            {a.category.name}
+                          </span>
+                        )}
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mt-0.5" style={{ fontFamily: 'var(--font-syne)' }}>
                           {a.title}
                         </p>

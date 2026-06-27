@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import { Category } from '@/lib/models';
-import { requireAuth, requireAdmin } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { makeSlug } from '@/lib/utils';
 
 export async function GET(req: NextRequest) {

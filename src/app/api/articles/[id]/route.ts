@@ -76,6 +76,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
       $push: { revisions: { $each: [revisionData], $slice: -10 } },
     });
 
+    // Sanitize canonicalUrl — strip any external domain (canonical hijacking prevention)
+    body.canonicalUrl = sanitizeCanonicalUrl(body.canonicalUrl);
+
     const updated = await Article.findByIdAndUpdate(params.id, { $set: body }, { new: true })
       .populate('category', 'name slug')
       .populate('author', 'name avatar slug');
